@@ -1,0 +1,48 @@
+name: LicenseHunter Protocol CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  contracts:
+    name: Smart Contract Tests (Foundry)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Build Contracts
+        run: cd contracts && forge build
+
+      - name: Run Foundry Unit & Fuzz Tests
+        run: cd contracts && forge test -vvv
+
+  frontend:
+    name: Frontend Monorepo Build & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Typecheck Packages
+        run: npm run typecheck
+
+      - name: Build Next.js Application
+        run: npm run build
