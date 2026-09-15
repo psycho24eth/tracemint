@@ -1,32 +1,21 @@
 {
-  "name": "licensehunter-monorepo",
-  "version": "1.0.0",
+  "name": "licensehunter",
+  "type": "module",
   "private": true,
-  "description": "LicenseHunter - Turn IP Infringement Into Instant Licensing",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["frontend"],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/web",
-    "build": "npm run build --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "contracts:build": "cd contracts && forge build",
-    "contracts:test": "cd contracts && forge test -vvv",
-    "contracts:deploy": "cd contracts && forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast"
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm run start",
+    "lint": "cd frontend && npm run lint",
+    "deploy": "genlayer deploy",
+    "accounts": "tsx deploy/fund-accounts.ts",
+    "spike": "tsx spikes/run-spike.ts",
+    "deploy:contract": "tsx deploy/deploy-license-hunter.ts",
+    "smoke": "tsx deploy/smoke.ts"
   },
-  "keywords": [
-    "web3",
-    "licensing",
-    "ip",
-    "blockchain",
-    "evm",
-    "smart-contracts",
-    "foundry",
-    "nextjs"
-  ],
-  "author": "LicenseHunter Team",
-  "license": "MIT"
+  "devDependencies": {
+    "genlayer-js": "2.0.0-rc.1",
+    "tsx": "^4.23.13"
+  }
 }
