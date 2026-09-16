@@ -1,0 +1,27 @@
+{
+  "name": "@licensehunter/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./genlayer": "./src/genlayer.ts",
+    "./phash": "./src/phash.ts"
+  },
+  "scripts": {
+    "scan": "tsx src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cheerio": "1.2.0",
+    "genlayer-js": "2.0.0-rc.1",
+    "sharp": "0.35.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
+  }
+}
