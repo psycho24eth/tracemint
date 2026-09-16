@@ -257,11 +257,6 @@ def handle_leader_error(leaders_res, leader_fn) -> bool:
     return False
 
 
-def run_consensus(leader_fn, validator_fn):
-    # Use gl.vm.run_nondet instead if docs/platform-checks.md records that run_nondet_default is unavailable.
-    return gl.vm.run_nondet_default(leader_fn, validator_fn)
-
-
 def fetch_image(url: str) -> "gl.nondet.Image":
     try:
         response = gl.nondet.web.get(url)
@@ -522,4 +517,4 @@ class LicenseHunter(gl.contract.Contract):
                 return handle_leader_error(leaders_res, leader_fn)
             return decisions_match(leaders_res.calldata, leader_fn())
 
-        return run_consensus(leader_fn, validator_fn)
+        return gl.vm.run_nondet(leader_fn, validator_fn)
