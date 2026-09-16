@@ -60,3 +60,12 @@ Spike contract `0x9df23488FE9c2B2E60b29D2244929fD130e12596`.
 - gltest direct mode returns empty bytes for `web.render(mode="screenshot")`, and the SDK decodes screenshots with Pillow. `tests/direct/conftest.py` stubs `PIL.Image` so the decoder accepts the mock.
 - Run 1 also showed that under `run_nondet_default`, a leader error plus a validator that returns a bool raises `TypeError: validator function returned 'Return(calldata=False)' while leader returned 'VMError(...)'`. LicenseHunter avoids this by using `run_nondet`.
 - Simulating a write with `estimateTransactionFeesForWrite` executes the method. Use it only for writes that emit messages (the withdrawals), not for `file_claim` or `dispute`, whose simulation would run the whole vision judgment.
+
+## Deployment
+
+- LicenseHunter address: `0xA7225195035c80Fc6E9128112947B9bF87c7A5Dd`
+- Deploy transaction: https://explorer-studio-dev.genlayer.com/tx/0xea38d079569e2a8bc3955cb06c9596370dbd70160bca199fab69d1466689b903
+- Owner and agent: `0x577706CEF3A249702A6baa25AaFF33aCD5f621Cd`
+- Smoke check on 2026-09-16: `smoke ok`, zero works and claims
+- Not yet verified on Studio Next: the ownership check against a live portfolio page, a full claim, a payment, and a withdrawal. Plan 4 runs these through the judge path once the demo pages are hosted.
+

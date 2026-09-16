@@ -22,7 +22,11 @@ export const isSuccessfulDeploymentReceipt = (receipt: {
 };
 
 export default async function main(client: GenLayerClient<any>) {
-  const filePath = path.resolve(process.cwd(), "contracts/football_bets.py");
+  const filePath = path.resolve(process.cwd(), "contracts/license_hunter.py");
+  const agentAddress = process.env.AGENT_ADDRESS;
+  if (!agentAddress) {
+    throw new Error("Set AGENT_ADDRESS before running genlayer deploy");
+  }
 
   try {
     const contractCode = new Uint8Array(readFileSync(filePath));
@@ -31,7 +35,7 @@ export default async function main(client: GenLayerClient<any>) {
 
     const deployTransaction = await client.deployContract({
       code: contractCode,
-      args: [],
+      args: [agentAddress],
     });
 
     const receipt = await client.waitForTransactionReceipt({
