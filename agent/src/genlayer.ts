@@ -100,6 +100,27 @@ export async function deploy(client: StudioClient, contractPath: string, args: u
   return { hash, tx, ok: isSuccessful(tx), address };
 }
 
+export async function submitWrite(
+  client: StudioClient,
+  address: string,
+  functionName: string,
+  args: unknown[],
+  options: { value?: bigint; fees?: FeePreset; emitsMessages?: boolean } = {},
+): Promise<Hex> {
+  const preset = options.fees ?? LIGHT_FEES;
+  const value = options.value ?? 0n;
+  const fees = options.emitsMessages
+    ? await quoteMessageFees(client, preset, { address, functionName, args, value })
+    : await quoteFees(client, preset);
+  return (await client.writeContract({
+    address: address as Hex,
+    functionName,
+    args: args as never,
+    value,
+    fees: fees as never,
+  })) as Hex;
+}
+
 export async function write(
   client: StudioClient,
   address: string,
@@ -107,18 +128,7 @@ export async function write(
   args: unknown[],
   options: { value?: bigint; fees?: FeePreset; emitsMessages?: boolean } = {},
 ) {
-  const preset = options.fees ?? LIGHT_FEES;
-  const value = options.value ?? 0n;
-  const fees = options.emitsMessages
-    ? await quoteMessageFees(client, preset, { address, functionName, args, value })
-    : await quoteFees(client, preset);
-  const hash = (await client.writeContract({
-    address: address as Hex,
-    functionName,
-    args: args as never,
-    value,
-    fees: fees as never,
-  })) as Hex;
+  const hash = await submitWrite(client, address, functionName, args, options);
   const tx = await waitDecided(client, hash);
   return { hash, tx, ok: isSuccessful(tx) };
 }
