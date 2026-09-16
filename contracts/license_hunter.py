@@ -162,6 +162,89 @@ def license_to_dict(lic: License) -> dict:
 
 # Judgment helpers
 
+FENCE = "`" * 3
+
+
+def claim_key(work_id: int, page_url: str, image_url: str) -> str:
+    return f"{work_id}|{page_url}|{image_url}"
+
+
+def compute_fee(base_price: int, usage: str, prominence: str) -> int:
+    return base_price * USAGE_BPS[usage] * PROMINENCE_BPS[prominence] // (BPS * BPS)
+
+
+def creator_share(fee: int) -> int:
+    return fee * (BPS - PROTOCOL_FEE_BPS) // BPS
+
+
+def parse_llm_json(raw) -> dict:
+    if isinstance(raw, dict):
+        return raw
+    text = str(raw).strip().replace(FENCE + "json", "").replace(FENCE, "").strip()
+    start, end = text.find("{"), text.rfind("}") + 1
+    if start < 0 or end <= start:
+        raise gl.vm.UserError(f"{ERR_LLM} Model did not return JSON")
+    try:
+        data = json.loads(text[start:end])
+    except ValueError:
+        raise gl.vm.UserError(f"{ERR_LLM} Model returned invalid JSON")
+    if not isinstance(data, dict):
+        raise gl.vm.UserError(f"{ERR_LLM} Model JSON is not an object")
+    return data
+
+
+def normalize_judgment(raw, page_text: str) -> dict:
+    data = parse_llm_json(raw)
+    verdict = str(data.get("verdict", "")).strip().upper()
+    if verdict not in VERDICTS:
+        raise gl.vm.UserError(f"{ERR_LLM} Unknown verdict: {verdict}")
+    usage = str(data.get("usage", "")).strip().upper()
+    prominence = str(data.get("prominence", "")).strip().upper()
+    if verdict == "COPY_UNLICENSED":
+        if usage not in USAGE_BPS:
+            raise gl.vm.UserError(f"{ERR_LLM} Unknown usage: {usage}")
+        if prominence not in PROMINENCE_BPS:
+            raise gl.vm.UserError(f"{ERR_LLM} Unknown prominence: {prominence}")
+    else:
+        usage = "NONE"
+        prominence = "NONE"
+    wallets = WALLET_PATTERN.findall(page_text)
+    return {
+        "verdict": verdict,
+        "usage": usage,
+        "prominence": prominence,
+        "reasoning": str(data.get("reasoning", ""))[:MAX_REASONING_CHARS],
+        "wallet_on_page": wallets[0].lower() if wallets else "",
+    }
+
+
+def decisions_match(leader, mine: dict) -> bool:
+    """Validator rule: the decision fields must match; reasoning is never compared."""
+    if not isinstance(leader, dict):
+        return False
+    if leader.get("verdict") != mine["verdict"] or leader.get("wallet_on_page") != mine["wallet_on_page"]:
+        return False
+    if mine["verdict"] == "COPY_UNLICENSED":
+        return leader.get("usage") == mine["usage"] and leader.get("prominence") == mine["prominence"]
+    return True
+
+
+def error_text(err) -> str:
+    for attribute in ("data", "message"):
+        value = getattr(err, attribute, None)
+        if value is not None:
+            return str(value)
+    return str(err)
+
+
+def errors_agree(leader_message: str, validator_message: str) -> bool:
+    """Expected and external errors must match exactly, transient errors agree with each other,
+    and model errors always disagree so the network picks a new leader."""
+    for prefix in (ERR_EXPECTED, ERR_EXTERNAL):
+        if validator_message.startswith(prefix):
+            return validator_message == leader_message
+    return validator_message.startswith(ERR_TRANSIENT) and leader_message.startswith(ERR_TRANSIENT)
+
 
 class LicenseHunter(gl.contract.Contract):
     owner: gl.Address

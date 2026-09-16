@@ -1,7 +1,9 @@
 """Shared helpers for LicenseHunter direct-mode tests."""
 
 import json
+import sys
 
+import pytest
 from eth_utils import to_checksum_address
 
 CONTRACT = "contracts/license_hunter.py"
@@ -46,3 +48,10 @@ def register_work(vm, contract, creator, base_price=10 * GEN, watch_urls=None, p
         "Non-exclusive web license, 12 months",
         [PAGE_URL] if watch_urls is None else watch_urls,
     )
+
+
+@pytest.fixture
+def lh(direct_vm, direct_deploy, direct_owner, direct_charlie):
+    """The contract module as gltest loaded it, for testing pure helper functions directly."""
+    deploy_license_hunter(direct_vm, direct_deploy, direct_owner, direct_charlie)
+    return sys.modules["_contract_license_hunter"]
