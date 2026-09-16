@@ -476,6 +476,27 @@ class LicenseHunter(gl.contract.Contract):
 
     # Disputes
 
+    @gl.public.write
+    def dispute(self, claim_id: int, proof_url: str) -> str:
+        claim = self._get_claim(claim_id)
+        require(claim.status == "NOTICE_ISSUED", "Only an open notice can be disputed")
+        require(is_https_url(proof_url), "URLs must start with https://")
+        if claim.wallet_on_page:
+            require(
+                gl.message.sender_address.as_hex.lower() == claim.wallet_on_page,
+                "Only the wallet shown on the page can dispute",
+            )
+
+        work = self._get_work(int(claim.work_id))
+        judgment = self._judge(work, claim.page_url, claim.image_url, proof_url)
+        claim.dispute_proof_url = proof_url
+        if judgment["verdict"] == "COPY_UNLICENSED":
+            claim.status = "DISPUTE_REJECTED"
+        else:
+            claim.status = "WITHDRAWN"
+            claim.reasoning = judgment["reasoning"]
+        return claim.status
+
     # Views
 
     @gl.public.view
