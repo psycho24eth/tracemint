@@ -7,6 +7,7 @@ import {
   HEAVY_FEES,
   json,
   loadEnv,
+  quoteFees,
   read,
   requireEnv,
   txLink,
@@ -36,21 +37,51 @@ if (!deployed.ok || !deployed.address) {
 const spike = deployed.address;
 console.log(`spike contract: ${spike} ${addressLink(spike)}`);
 
-async function check(name: string, method: string, args: unknown[], value?: bigint): Promise<boolean> {
-  const result = await write(agent, spike, method, args, { value, fees: HEAVY_FEES });
-  console.log(`${name}: ${describeTx(result.tx)} ${txLink(result.hash)}`);
-  if (!result.ok) console.error(json(result.tx));
-  console.log(`${name} stored: ${await read(agent, spike, "get_last")}`);
-  return result.ok;
+async function check(
+  name: string,
+  method: string,
+  args: unknown[],
+  value?: bigint,
+  dumpReceipt?: boolean,
+): Promise<boolean> {
+  // A hard chain-level rejection (e.g. an EVM revert on invalid fee params) throws from
+  // writeContract before any receipt exists, instead of resolving to a FINISHED_WITH_ERROR
+  // receipt like a normal contract-side failure does. Catch it so one bad call doesn't take
+  // down the rest of the run; record it as a failed check with the thrown message as evidence.
+  try {
+    const result = await write(agent, spike, method, args, { value, fees: HEAVY_FEES });
+    console.log(`${name}: ${describeTx(result.tx)} ${txLink(result.hash)}`);
+    if (!result.ok) console.error(json(result.tx));
+    // dumpReceipt: full receipt regardless of outcome, to inspect on-chain message fee budget /
+    // message allocation fields (the controller wants these compared to Task 2's "0 wei" / "0" transfer).
+    if (dumpReceipt) console.log(`${name} receipt: ${json(result.tx)}`);
+    console.log(`${name} stored: ${await read(agent, spike, "get_last")}`);
+    return result.ok;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`${name}: threw before a receipt was obtained: ${message}`);
+    return false;
+  }
 }
 
 const results: Record<string, boolean> = {};
 results.sameArtwork = await check("same artwork", "compare", [STARRY_960, STARRY_500]);
 results.differentArtwork = await check("different artwork", "compare", [STARRY_960, MONA_500]);
 results.pageRender = await check("page render", "page_has", [STARRY_PAGE, "Van Gogh"]);
+results.textPrompt = await check("text prompt", "ask", ["What color is a clear daytime sky?"]);
+results.sameArtworkShots = await check("same artwork (screenshots)", "compare_shots", [STARRY_960, STARRY_500]);
+results.differentArtworkShots = await check("different artwork (screenshots)", "compare_shots", [
+  STARRY_960,
+  MONA_500,
+]);
+results.pageUsage = await check("page usage", "describe_page", [STARRY_PAGE]);
 
+const unfundedQuote = await quoteFees(agent, HEAVY_FEES);
+console.log(
+  `unfunded transfer fee quote: feeValue=${unfundedQuote.feeValue} totalMessageFees=${unfundedQuote.distribution.totalMessageFees}`,
+);
 const before = await balanceOf(creator);
-results.transferTx = await check("transfer 1 GEN", "forward", [creator], ONE_GEN);
+results.transferTx = await check("transfer 1 GEN", "forward", [creator], ONE_GEN, true);
 let after = before;
 for (let attempt = 0; attempt < 12 && after === before; attempt += 1) {
   await new Promise((resolve) => setTimeout(resolve, 10_000));
@@ -58,4 +89,7 @@ for (let attempt = 0; attempt < 12 && after === before; attempt += 1) {
 }
 results.transferArrived = after - before === ONE_GEN;
 console.log(`creator balance ${before} -> ${after}`);
+
+// Funded payout checks live in spikes/transfer-check.ts and spikes/evm-transfer-check.ts (docs/platform-checks.md).
+
 console.log(json(results));

@@ -1,24 +1,62 @@
 # Platform checks (Studio Next)
 
-Run: 2026-09-16, `npm run spike`. Network: Studio Next (chain 61997).
+Network: Studio Next (chain 61997), runner `py-genlayer:5jycge4…`. Three runs on 2026-09-16:
+
+- **Run 1** (Task 2): `npm run spike`
+- **Run 2** (Task 2b): `npm run spike` again, extended, plus `spikes/transfer-check.ts`
+- **Run 3** (Task 2b): `spikes/evm-transfer-check.ts`
+
+## Run 1
 
 | Check | Result | Evidence |
 |---|---|---|
-| Runner header `5jycge4…` deploys | PASS | Deployed on the first attempt with the original header (no fallback needed). Tx `0x70bbae0ef2770405aed7425622e00466cd90d853f22b3bda4df5af64cb69f4e2`, status `5 / FINISHED_WITH_RETURN`. Contract `0x73cDdB5C6Bd47C1e42943b350A8b010E4217C769`. https://explorer-studio-dev.genlayer.com/tx/0x70bbae0ef2770405aed7425622e00466cd90d853f22b3bda4df5af64cb69f4e2 |
-| Two-image JSON prompt, same artwork | FAIL | Stored value: `""` (unchanged from init — the write never reached the `self.last` assignment). Tx `0xa0f5b97d03df88d720e6ddd5469e2e296656446e5e49b13e3045da310f20eb13`, status `6 / FINISHED_WITH_ERROR` (result `MAJORITY_DISAGREE` / `UNDETERMINED`). Leader raised `genlayer.nondet.NondetException: INVALID_IMAGE` inside `gl.nondet.exec_prompt(images=[first, second], ...)`. https://explorer-studio-dev.genlayer.com/tx/0xa0f5b97d03df88d720e6ddd5469e2e296656446e5e49b13e3045da310f20eb13 |
-| Two-image JSON prompt, different artwork | FAIL | Stored value: `""` (unchanged). Tx `0xd044b52491ae742c34a3931d32d0852955d36f3f45486ee56d5ab0caeb8bf958`, status `6 / FINISHED_WITH_ERROR` (same `MAJORITY_DISAGREE` / `UNDETERMINED` pattern). Same `NondetException: INVALID_IMAGE` on the leader. https://explorer-studio-dev.genlayer.com/tx/0xd044b52491ae742c34a3931d32d0852955d36f3f45486ee56d5ab0caeb8bf958 |
-| `web.render` text mode + `strict_eq` | PASS | Stored value: `{"found": true}`. Tx `0x29838c3d7f3b37af7016c7e3e0445d5deb599d22644f6b864ef74ff0a6685273`, status `5 / FINISHED_WITH_RETURN`. https://explorer-studio-dev.genlayer.com/tx/0x29838c3d7f3b37af7016c7e3e0445d5deb599d22644f6b864ef74ff0a6685273 |
-| `emit_transfer` to a wallet arrives | FAIL | Creator balance unchanged: `1000000000000000000000 -> 1000000000000000000000` (0 GEN arrived). Tx `0x79754575b7bf5f79e62acc9cdcdb6775516b5e3d8c2fba6ccd8febcb89c69e6a` reached consensus (`MAJORITY_AGREE` / `ACCEPTED`) but `txExecutionResultName: FINISHED_WITH_ERROR` with empty `stderr`/`error_code`/`raw_error` — no diagnostic message surfaced. Leader/validator time-units consumed were 1/3 out of 600 allocated, ruling out a fee or timeout cause. https://explorer-studio-dev.genlayer.com/tx/0x79754575b7bf5f79e62acc9cdcdb6775516b5e3d8c2fba6ccd8febcb89c69e6a |
-| Explorer transaction link format | PASS | `${EXPLORER_URL}/tx/{hash}` — HTTP 200 on all 6 printed transaction links (`curl -s -o /dev/null -w "%{http_code}"`). A bogus path (`/this-path-should-not-exist-xyz123`) returned HTTP 404, confirming the explorer validates routes rather than answering 200 for everything. |
-| Explorer address link format | PASS | `${EXPLORER_URL}/address/{address}` — HTTP 200 on the deployed contract's address link `https://explorer-studio-dev.genlayer.com/address/0x73cDdB5C6Bd47C1e42943b350A8b010E4217C769`. |
+| Runner header `5jycge4…` deploys | PASS | Tx `0x70bbae0e…`, `5 / FINISHED_WITH_RETURN`, contract `0x73cDdB5C6Bd47C1e42943b350A8b010E4217C769`. https://explorer-studio-dev.genlayer.com/tx/0x70bbae0ef2770405aed7425622e00466cd90d853f22b3bda4df5af64cb69f4e2 |
+| Two-image prompt with raw `web.get` bytes, same artwork | FAIL | The leader raised `NondetException: INVALID_IMAGE` inside `exec_prompt`. https://explorer-studio-dev.genlayer.com/tx/0xa0f5b97d03df88d720e6ddd5469e2e296656446e5e49b13e3045da310f20eb13 |
+| Two-image prompt with raw `web.get` bytes, different artwork | FAIL | Same `INVALID_IMAGE`. https://explorer-studio-dev.genlayer.com/tx/0xd044b52491ae742c34a3931d32d0852955d36f3f45486ee56d5ab0caeb8bf958 |
+| `web.render` text mode + `strict_eq` | PASS | Stored `{"found": true}`. https://explorer-studio-dev.genlayer.com/tx/0x29838c3d7f3b37af7016c7e3e0445d5deb599d22644f6b864ef74ff0a6685273 |
+| `emit_transfer` to a wallet with no message budget | FAIL | `FINISHED_WITH_ERROR` with empty stderr. The explorer receipt shows "Message fee budget 0 wei", and the creator balance did not change. https://explorer-studio-dev.genlayer.com/tx/0x79754575b7bf5f79e62acc9cdcdb6775516b5e3d8c2fba6ccd8febcb89c69e6a |
+| Explorer links | PASS | `${EXPLORER_URL}/tx/{hash}` and `${EXPLORER_URL}/address/{address}` return HTTP 200 and render full receipts. A bogus path returns 404. |
+
+## Run 2
+
+Spike contract `0x282A5b1175B914a6cA9cDA9fe4519cb681223980`.
+
+| Check | Result | Evidence |
+|---|---|---|
+| Raw `web.get` bytes, same / different artwork | FAIL | `FINISHED_WITH_ERROR` again. https://explorer-studio-dev.genlayer.com/tx/0xb4ad5b8309d0b56a6290c7d50f6a21e27789e5c49ab6575254f2f9885c425c66, https://explorer-studio-dev.genlayer.com/tx/0xd8112998c7852756086071131f7da1f9159f4dbcb933c3ac2cebf057cc7b2a2a |
+| Text-only JSON prompt | PASS | Stored `{"answer": "blue"}`. https://explorer-studio-dev.genlayer.com/tx/0xa8435a7c44923a86ca3e1b87cc3ca4d8768b9df917f413d77b29fbe8a2b5d7aa |
+| Screenshots (`web.render(mode="screenshot")`), Starry Night 960px vs 500px | PASS | Stored `{"same_work": true}`. https://explorer-studio-dev.genlayer.com/tx/0xdd5011985cb116e36c28facd0a08be810575382fd3039597150fef7bc99b4542 |
+| Screenshots, Starry Night vs Mona Lisa | PASS | Stored `{"same_work": false}`. https://explorer-studio-dev.genlayer.com/tx/0xfb97d2ee66bb9079953561c62579f309d9704768c77aa86b779668a40751d05f |
+| Page-text usage classification | PASS | Stored `{"usage": "EDITORIAL"}` for the Wikipedia article. https://explorer-studio-dev.genlayer.com/tx/0x839592cf0d899cad5cc19deb792380cbd949cf1a40d985229884e167e7d22409 |
+| Internal `emit_transfer`, no message budget | FAIL | `FINISHED_WITH_ERROR`, balance unchanged. https://explorer-studio-dev.genlayer.com/tx/0x9c36cae629a7f1768718e074ee077c4d16865a14136e57c1ed06933428a3b0ef |
+| Internal `emit_transfer`, hand-written allocation with no `budget` | FAIL | Reverted before execution: EVM tx `0xa5977946…` `InvalidFeeParams`. genlayer-js sums the root allocation budgets into `totalMessageFees`, so the message had a budget of 0. |
+| Internal `emit_transfer`, fees from `estimateTransactionFeesForWrite` | EXECUTES, NEVER DELIVERED | The simulation produced one Internal allocation with a 0.06 GEN budget. The tx is `FINALIZED / FINISHED_WITH_RETURN` and lists the 1 GEN message, but it triggered no transaction. More than 8 hours later the creator balance is unchanged and the 1 GEN is still in the spike contract. https://explorer-studio-dev.genlayer.com/tx/0x0512394618117aa2ddf19c73e54ab6861c82dcabd29d60df48365b19cb14d86c |
+| Internal `emit_transfer`, `totalMessageFees` pool only (what the Transaction Kit sends) | FAIL | `FINISHED_WITH_ERROR`: `Mode1MessageFeesRequireGenVMPerEmissionSupport: fee-bearing GenVM messages require a message allocation tree`. https://explorer-studio-dev.genlayer.com/tx/0x5285fe20b455de1336c3c9b5f72baf59eaa417104e3a628f187d28254cbaaa13 |
+
+## Run 3
+
+Spike contract `0x9df23488FE9c2B2E60b29D2244929fD130e12596`.
+
+| Check | Result | Evidence |
+|---|---|---|
+| External message `gl.evm.Account(to).emit_call(amount, b"")`, fees from `estimateTransactionFeesForWrite` | PASS | The simulation produced one External allocation (`messageType` 0) with a budget of 0.00015 GEN; total fee value was 0.000459 GEN. The tx is `FINALIZED / FINISHED_WITH_RETURN`. Creator balance went from 1000 to 1001 GEN within the polling window, and the spike balance went back to 0. https://explorer-studio-dev.genlayer.com/tx/0x425209ce97a5d365fab6eaa2cc179ef4f9c15325e5aa178eb70ef2140bd1eba2 |
 
 ## Decisions
 
-- Consensus function: `gl.vm.run_nondet_default`. No receipt named `run_nondet_default` as the cause of a failure (the `compare` failures were `NondetException: INVALID_IMAGE`, raised inside `exec_prompt` before consensus dispatch even mattered), so the decision-rule-1 fallback to `gl.vm.run_nondet` was never triggered. `run_nondet_default` did correctly orchestrate a leader/validator round and reach a decided state on every call.
-- Judging mode: `exact-copy`. Both `compare` calls failed with an image error (`NondetException: INVALID_IMAGE` fetching/attaching the Wikimedia thumbnails to `exec_prompt`), which is exactly decision rule 2's "fails with an image or LLM error" condition. Task 5 Step 6 adapts the leader function for this mode.
-- Heavy fee preset `600/1200` time units was enough: **no**. The very first heavy-fee write reverted before any contract logic ran: `Error: Transaction reverted: ... PhaseTimeoutOutOfBounds(1200,30,600)` — the chain caps `validatorTimeunitsAllocation` at 600, and the brief's literal `1200` exceeded it. This is a hard ceiling, not an under-allocation, so ruling 7's "double it" recipe would have made it fail harder; instead `HEAVY_FEES` in `deploy/studio-next.ts` was corrected to `{ leaderTimeunitsAllocation: 600, validatorTimeunitsAllocation: 600, rotations: [1] }` and the spike was rerun from that point. The corrected 600/600 preset was accepted by the chain and had ample headroom for every subsequent check (actual usage: `compare` ~2/9 leader/validator time-units, `forward` ~1/3 — all far under the 600 cap).
+- **Consensus function:** LicenseHunter calls `gl.vm.run_nondet`.
+  - Both `run_nondet` and `run_nondet_default` use the same `RunNondet` host call, which works on Studio Next.
+  - genvm-lint 0.11.1rc2 only recognizes `run_nondet` as a nondet entry point.
+  - The contract's validators return a verdict even when the leader fails, which is how `run_nondet` expects them to behave. Under `run_nondet_default` that case raises the `TypeError` recorded below.
+- **Judging mode:** `vision`. Images reach the model as browser screenshots from `web.render(mode="screenshot")`. Raw downloaded bytes fail with `INVALID_IMAGE`.
+- **Heavy fee preset:** 600/600 time units. Studio Next rejects validator allocations above 600 with `PhaseTimeoutOutOfBounds(1200,30,600)`, and 600/600 leaves ample headroom.
+- **Transfers:** pay wallets with an external message, `gl.evm.Account(gl.Address(to)).emit_call(amount, b"")`.
+  - The caller must declare a message allocation tree, which is what `client.estimateTransactionFeesForWrite(...)` returns (`messageAllocations`). A write that emits a message is sent with `fees: { distribution, messageAllocations, feeValue }`.
+  - Internal `emit_transfer` messages to wallets never arrive.
+  - Fee value alone, with no allocations, fails with `Mode1MessageFeesRequireGenVMPerEmissionSupport`. That is all the Transaction Kit's `submit` sends, so wallet writes that emit messages need allocations added on top of the kit.
 
 ## Notes for later tasks
 
-- `emit_transfer` did not move GEN in this run and failed with no diagnostic message (empty `stderr`, `error_code: null`, `raw_error: null`) despite reaching clean validator consensus on the error. Per decision rule 4 this is recorded and not retried here — Plan 4 retests transfers — but the opaque failure mode is worth a closer look before LicenseHunter's payment flow depends on `emit_transfer`.
-- The `gl.vm.run_nondet_default` + custom `validator_fn` pattern, when the leader raises an exception, produced inconsistent validator outcomes (`UNDETERMINED` with a mix of `idle`/`disagree` votes) rather than a clean majority — some validators' own re-invocation of `leader_fn()` inside `validator_fn` appears to hit the same `INVALID_IMAGE` condition and raise internally (`TypeError: validator function returned 'Return(calldata=False)' while leader returned 'VMError(...)'` in `genlayer/vm/__init__.py`), rather than the contract's own `if not isinstance(leader_result, gl.vm.Return): return False` guard producing a clean disagreement. This is a GenVM-level rough edge when the leader errors, separate from the image-validity question.
+- gltest direct mode has no handler for contract-emitted messages, so successful withdrawals are verified on Studio Next only.
+- gltest direct mode returns empty bytes for `web.render(mode="screenshot")`, and the SDK decodes screenshots with Pillow. `tests/direct/conftest.py` stubs `PIL.Image` so the decoder accepts the mock.
+- Run 1 also showed that under `run_nondet_default`, a leader error plus a validator that returns a bool raises `TypeError: validator function returned 'Return(calldata=False)' while leader returned 'VMError(...)'`. LicenseHunter avoids this by using `run_nondet`.
+- Simulating a write with `estimateTransactionFeesForWrite` executes the method. Use it only for writes that emit messages (the withdrawals), not for `file_claim` or `dispute`, whose simulation would run the whole vision judgment.

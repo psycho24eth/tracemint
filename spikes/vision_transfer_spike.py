@@ -51,6 +51,72 @@ class VisionTransferSpike(gl.contract.Contract):
         self.last = json.dumps({"forwarded": amount})
         gl.chain.Account(gl.Address(to)).emit_transfer(amount, on="finalized")
 
+    @gl.public.write.payable
+    def forward_evm(self, to: str) -> None:
+        # External message: wallets live on the EVM side, where internal messages never land (Task 2b).
+        amount = int(gl.message.value)
+        self.forwarded = int(self.forwarded) + amount
+        self.last = json.dumps({"forwarded_evm": amount})
+        gl.evm.Account(gl.Address(to)).emit_call(amount, b"")
+
+    @gl.public.write
+    def ask(self, question: str) -> None:
+        def leader_fn() -> dict:
+            raw = gl.nondet.exec_prompt(
+                question + ' Respond with JSON only: {"answer": "<one word>"}',
+                response_format="json",
+            )
+            data = raw if isinstance(raw, dict) else json.loads(str(raw))
+            return {"answer": str(data.get("answer", ""))[:40]}
+
+        def validator_fn(leader_result) -> bool:
+            if not isinstance(leader_result, gl.vm.Return):
+                return False
+            return isinstance(leader_result.calldata.get("answer"), str)
+
+        self.last = json.dumps(gl.vm.run_nondet_default(leader_fn, validator_fn), sort_keys=True)
+
+    @gl.public.write
+    def compare_shots(self, url_a: str, url_b: str) -> None:
+        def leader_fn() -> dict:
+            first = gl.nondet.web.render(url_a, mode="screenshot")
+            second = gl.nondet.web.render(url_b, mode="screenshot")
+            raw = gl.nondet.exec_prompt(
+                "Image 1 and image 2 are attached. Do they show the same artwork, allowing for "
+                'resizing or cropping? Respond with JSON only: {"same_work": true} or {"same_work": false}',
+                images=[first, second],
+                response_format="json",
+            )
+            data = raw if isinstance(raw, dict) else json.loads(str(raw))
+            return {"same_work": bool(data.get("same_work"))}
+
+        def validator_fn(leader_result) -> bool:
+            if not isinstance(leader_result, gl.vm.Return):
+                return False
+            return leader_result.calldata["same_work"] == leader_fn()["same_work"]
+
+        self.last = json.dumps(gl.vm.run_nondet_default(leader_fn, validator_fn), sort_keys=True)
+
+    @gl.public.write
+    def describe_page(self, url: str) -> None:
+        def leader_fn() -> dict:
+            text = gl.nondet.web.render(url, mode="text")[:2000]
+            raw = gl.nondet.exec_prompt(
+                "Classify how this page uses images. Page text follows.\n\n"
+                + text
+                + '\n\nRespond with JSON only: {"usage": "PERSONAL" | "EDITORIAL" | "COMMERCIAL" | "ADS_MERCH"}',
+                response_format="json",
+            )
+            data = raw if isinstance(raw, dict) else json.loads(str(raw))
+            return {"usage": str(data.get("usage", ""))[:20]}
+
+        def validator_fn(leader_result) -> bool:
+            if not isinstance(leader_result, gl.vm.Return):
+                return False
+            return leader_result.calldata["usage"] == leader_fn()["usage"]
+
+        self.last = json.dumps(gl.vm.run_nondet_default(leader_fn, validator_fn), sort_keys=True)
+
     @gl.public.view
     def get_last(self) -> str:
         return self.last

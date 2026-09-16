@@ -70,6 +70,30 @@ export async function quoteFees(client: StudioClient, preset: FeePreset) {
   return { distribution: estimate.distribution, feeValue: estimate.feeValue };
 }
 
+/**
+ * Fees for a write that emits messages (payouts). Studio Next only funds contract-emitted messages
+ * through a declared allocation tree, which the simulation derives; see docs/platform-checks.md.
+ * The simulation executes the method, so use this only for cheap writes such as withdrawals.
+ */
+export async function quoteMessageFees(
+  client: StudioClient,
+  preset: FeePreset,
+  call: { address: string; functionName: string; args: unknown[]; value: bigint },
+) {
+  const estimate = await client.estimateTransactionFeesForWrite({
+    ...preset,
+    address: call.address as Hex,
+    functionName: call.functionName,
+    args: call.args as never,
+    value: call.value,
+  } as never);
+  return {
+    distribution: estimate.distribution,
+    feeValue: estimate.feeValue,
+    ...(estimate.messageAllocations ? { messageAllocations: estimate.messageAllocations } : {}),
+  };
+}
+
 export function json(value: unknown): string {
   return JSON.stringify(value, (_key, v) => (typeof v === "bigint" ? v.toString() : v), 2);
 }
@@ -103,15 +127,19 @@ export async function write(
   address: string,
   functionName: string,
   args: unknown[],
-  options: { value?: bigint; fees?: FeePreset } = {},
+  options: { value?: bigint; fees?: FeePreset; emitsMessages?: boolean } = {},
 ) {
-  const fees = await quoteFees(client, options.fees ?? LIGHT_FEES);
+  const preset = options.fees ?? LIGHT_FEES;
+  const value = options.value ?? 0n;
+  const fees = options.emitsMessages
+    ? await quoteMessageFees(client, preset, { address, functionName, args, value })
+    : await quoteFees(client, preset);
   const hash = (await client.writeContract({
     address: address as Hex,
     functionName,
     args: args as never,
-    value: options.value ?? 0n,
-    fees,
+    value,
+    fees: fees as never,
   })) as Hex;
   const tx = await waitDecided(client, hash);
   return { hash, tx, ok: isSuccessful(tx) };
