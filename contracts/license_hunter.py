@@ -427,6 +427,53 @@ class LicenseHunter(gl.contract.Contract):
 
     # Payments
 
+    @gl.public.write.payable
+    def pay_license(self, claim_id: int) -> int:
+        claim = self._get_claim(claim_id)
+        require(claim.status in ("NOTICE_ISSUED", "DISPUTE_REJECTED"), "This notice is not payable")
+        fee = int(claim.fee)
+        require(int(gl.message.value) == fee, f"Send exactly {fee} wei")
+
+        work = self._get_work(int(claim.work_id))
+        creator_amount = creator_share(fee)
+        issued_at = now_ts()
+        license_id = int(self.next_license_id)
+        self.next_license_id = license_id + 1
+        self.licenses[license_id] = License(
+            id=license_id,
+            claim_id=claim_id,
+            work_id=int(claim.work_id),
+            licensee=gl.message.sender_address,
+            page_url=claim.page_url,
+            amount=fee,
+            creator_amount=creator_amount,
+            issued_at=issued_at,
+            expires_at=issued_at + LICENSE_SECONDS,
+        )
+        claim.status = "PAID"
+        self.creator_balances[work.creator] = int(self.creator_balances.get(work.creator, 0)) + creator_amount
+        self.protocol_balance = int(self.protocol_balance) + fee - creator_amount
+        return license_id
+
+    @gl.public.write
+    def withdraw_earnings(self) -> int:
+        sender = gl.message.sender_address
+        amount = int(self.creator_balances.get(sender, 0))
+        require(amount > 0, "No earnings to withdraw")
+        self.creator_balances[sender] = 0
+        # Wallets live on the EVM side: only an external message reaches them on Studio Next.
+        gl.evm.Account(sender).emit_call(amount, b"")
+        return amount
+
+    @gl.public.write
+    def withdraw_protocol_fees(self, to: str) -> int:
+        require(gl.message.sender_address == self.owner, "Only the owner can withdraw protocol fees")
+        amount = int(self.protocol_balance)
+        require(amount > 0, "No protocol fees to withdraw")
+        self.protocol_balance = 0
+        gl.evm.Account(gl.Address(to)).emit_call(amount, b"")
+        return amount
+
     # Disputes
 
     # Views
@@ -473,6 +520,16 @@ class LicenseHunter(gl.contract.Contract):
     @gl.public.view
     def list_notices(self) -> list:
         return [claim_to_dict(claim) for _, claim in self.claims.items() if claim.status in NOTICE_STATUSES]
+
+    @gl.public.view
+    def get_license(self, license_id: int) -> dict:
+        require(license_id in self.licenses, "License not found")
+        return license_to_dict(self.licenses[license_id])
+
+    @gl.public.view
+    def list_licenses(self, licensee: str) -> list:
+        wanted = licensee.lower()
+        return [license_to_dict(lic) for _, lic in self.licenses.items() if lic.licensee.as_hex.lower() == wanted]
 
     # Internal
 
