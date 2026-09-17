@@ -35,3 +35,7 @@ Thumbs.db
 *.sln
 *.sw?
 /context
+
+
+.vercel
+.env*
