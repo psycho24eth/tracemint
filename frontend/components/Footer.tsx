@@ -13,7 +13,7 @@ export function Footer() {
             For judges
           </Link>
           <a
-            href="https://github.com/psycho24eth/licensehunter"
+            href="https://github.com/psycho24eth/tracemint"
             className="rounded-sm transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             GitHub

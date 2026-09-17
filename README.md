@@ -2,7 +2,7 @@
 
 **Turn IP infringement into instant licensing.** Creators register images they own. An agent watches the sites they choose and finds copies. GenLayer validators then judge each copy: is it the same artwork, is it licensed, and how is it used? A confirmed unlicensed copy gets an on-chain, time-stamped notice with a pay link. The site owner settles with a one-click license, and the creator withdraws 97% of the fee.
 
-[![CI](https://github.com/psycho24eth/licensehunter/actions/workflows/ci.yml/badge.svg)](https://github.com/psycho24eth/licensehunter/actions/workflows/ci.yml)
+[![CI](https://github.com/psycho24eth/tracemint/actions/workflows/ci.yml/badge.svg)](https://github.com/psycho24eth/tracemint/actions/workflows/ci.yml)
 
 | | |
 |---|---|
