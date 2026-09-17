@@ -43,7 +43,7 @@ export function Navbar() {
   return (
     <header className="brand-navbar sticky top-0 z-50">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-        <Link href="/" aria-label="LicenseHunter home">
+        <Link href="/" aria-label="TraceMint home">
           <Logo />
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main">

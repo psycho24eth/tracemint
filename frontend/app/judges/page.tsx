@@ -17,7 +17,7 @@ export default function JudgesPage() {
 
   return (
     <PageShell>
-      <h1 className="mb-8 text-3xl font-bold text-gradient">Verify LicenseHunter in five minutes</h1>
+      <h1 className="mb-8 text-3xl font-bold text-gradient">Verify TraceMint in five minutes</h1>
 
       <div className="mb-8 space-y-4">
         <div className="flex gap-2">

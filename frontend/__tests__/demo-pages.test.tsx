@@ -53,7 +53,7 @@ describe("demo blog page", () => {
     const { container } = render(<DemoBlogPage />);
     const text = container.textContent ?? "";
 
-    expect(text).toContain("Licensed from Demo Creator via LicenseHunter");
+    expect(text).toContain("Licensed from Demo Creator via TraceMint");
     expect(addressesIn(text)).toEqual([]);
   });
 });

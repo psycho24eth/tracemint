@@ -1,6 +1,6 @@
 {
-  "name": "LicenseHunter",
-  "short_name": "LicenseHunter",
+  "name": "TraceMint",
+  "short_name": "TraceMint",
   "description": "AI-powered football match predictions on GenLayer blockchain",
   "start_url": "/",
   "display": "standalone",

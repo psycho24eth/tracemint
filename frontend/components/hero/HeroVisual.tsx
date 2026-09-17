@@ -19,7 +19,7 @@ export function HeroVisual() {
     <div className="relative h-full w-full">
       <HeroScene />
       <span className="sr-only">
-        A rotating 3D emblem of the LicenseHunter shield, orbited by artwork tiles that flash cyan when the scanning
+        A rotating 3D emblem of the TraceMint gem, orbited by artwork tiles that flash cyan when the scanning
         ring sweeps past them, representing the agent finding a copy.
       </span>
     </div>

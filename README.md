@@ -1,4 +1,4 @@
-# LicenseHunter
+# TraceMint
 
 **Turn IP infringement into instant licensing.** Creators register images they own. An agent watches the sites they choose and finds copies. GenLayer validators then judge each copy: is it the same artwork, is it licensed, and how is it used? A confirmed unlicensed copy gets an on-chain, time-stamped notice with a pay link. The site owner settles with a one-click license, and the creator withdraws 97% of the fee.
 
@@ -6,8 +6,8 @@
 
 | | |
 |---|---|
-| Live app | https://licensehunter.vercel.app |
-| Judge guide | https://licensehunter.vercel.app/judges |
+| Live app | https://tracemint.vercel.app |
+| Judge guide | https://tracemint.vercel.app/judges |
 | Contract | [`0xA7225195035c80Fc6E9128112947B9bF87c7A5Dd`](https://explorer-studio-dev.genlayer.com/address/0xA7225195035c80Fc6E9128112947B9bF87c7A5Dd) |
 | Network | GenLayer Studio Next, chain id 61997, RPC `https://studio-next.genlayer.com/api` |
 | Frontend kit | `@genlayer/transaction-kit@0.1.0-rc.2` with `genlayer-js@2.0.0-rc.1` (boilerplate `v2-dev`) |
@@ -33,7 +33,7 @@ Every step links to its transaction on the [Studio Next explorer](https://explor
 ## The six review questions
 
 **1. Does the app call a real GenLayer contract?**
-Yes. Every action in the app is a read or a write against the deployed `LicenseHunter` contract ([contracts/license_hunter.py](contracts/license_hunter.py)).
+Yes. Every action in the app is a read or a write against the deployed contract, `LicenseHunter` in [contracts/license_hunter.py](contracts/license_hunter.py). LicenseHunter is the project's code name; it also names the agent package.
 - Writes: `register_work`, `update_watchlist`, `file_claim`, `pay_license`, `withdraw_earnings`, `withdraw_protocol_fees`, `dispute`, `set_agent`.
 - Views: `get_work`, `list_works`, `get_claim`, `list_claims`, `list_notices`, `get_license`, `list_licenses`, `get_earnings`, `get_stats`.
 
@@ -45,7 +45,7 @@ Deciding whether an image on someone else's site is a copy of your work involves
 - Does the page show a licence?
 - Is the use editorial or an ad?
 
-If the accuser decides, the accused has no reason to trust the fee. In LicenseHunter, several independent validators each fetch the evidence themselves and must agree on the verdict, the usage class, and the prominence before a notice or fee exists. The notice, the reasoning, and the fee are then public and time-stamped. A dispute re-runs the same judgment with the site owner's proof.
+If the accuser decides, the accused has no reason to trust the fee. In TraceMint, several independent validators each fetch the evidence themselves and must agree on the verdict, the usage class, and the prominence before a notice or fee exists. The notice, the reasoning, and the fee are then public and time-stamped. A dispute re-runs the same judgment with the site owner's proof.
 
 **3. Does the contract keep meaningful state, and do validators check the meaningful outcome?**
 - **State:**
@@ -90,7 +90,7 @@ Yes. Follow **/judges**, or the five steps above. Each step shows the transactio
 ## How it works
 
 ```
-creator ──register_work──▶ LicenseHunter contract ◀── validators (ownership check: wallet on portfolio page)
+creator ──register_work──▶ TraceMint contract    ◀── validators (ownership check: wallet on portfolio page)
                                    ▲
 agent (GitHub Action / Scan now) ──file_claim(work, page, image)
    │  fetch watched pages → extract images → difference hash → match

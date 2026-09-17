@@ -4,7 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "LicenseHunter",
+  title: "TraceMint",
   description: "GenLayer validators judge copied images; site owners settle with a license.",
   manifest: "/site.webmanifest",
   icons: {

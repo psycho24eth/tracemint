@@ -37,11 +37,11 @@ const MORE_PICKS = [
 export default function DemoBlogPage() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-6 py-16">
-      <p className="text-sm font-medium text-accent">LicenseHunter blog</p>
+      <p className="text-sm font-medium text-accent">Synthwave Weekly</p>
       <h1 className="mt-2 text-4xl font-bold tracking-tight">Five synthwave artworks we love</h1>
       <p className="mt-4 text-muted-foreground">
         Retro suns, chrome grids, and neon skylines never get old. Here is a short roundup of five pieces from
-        the LicenseHunter community that capture the genre at its best, starting with a favorite of ours.
+        the synthwave community that capture the genre at its best, starting with a favorite of ours.
       </p>
 
       <h2 className="mt-10 text-xl font-semibold">1. Cybernetic Horizon</h2>
@@ -55,7 +55,7 @@ export default function DemoBlogPage() {
           height={800}
         />
         <figcaption className="mt-3 px-2 pb-2 text-sm">
-          <p className="font-medium text-foreground">Licensed from Demo Creator via LicenseHunter</p>
+          <p className="font-medium text-foreground">Licensed from Demo Creator via TraceMint</p>
           <p className="mt-1 text-muted-foreground">License: non-exclusive web license, 12 months.</p>
         </figcaption>
       </figure>

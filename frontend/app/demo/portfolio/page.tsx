@@ -29,7 +29,7 @@ export default function DemoPortfolioPage() {
 
       <div className="brand-card mt-6 space-y-3 p-5">
         <p className="break-all font-mono text-sm text-foreground">Wallet: {creatorAddress}</p>
-        <p className="text-muted-foreground">Licensing enquiries go through LicenseHunter.</p>
+        <p className="text-muted-foreground">Licensing enquiries go through TraceMint.</p>
       </div>
     </main>
   );

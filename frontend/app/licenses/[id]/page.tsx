@@ -85,7 +85,7 @@ export default function LicensePage() {
           </div>
 
           <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
-            Issued by LicenseHunter on GenLayer Studio Next.{" "}
+            Issued by TraceMint on GenLayer Studio Next.{" "}
             <Link href={addressLink(getContractAddress())} target="_blank" rel="noreferrer" className="underline">
               View contract
             </Link>

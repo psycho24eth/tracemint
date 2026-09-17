@@ -26,7 +26,7 @@ export function LogoMark({ size = "md", className = "" }: { size?: LogoSize; cla
       viewBox="0 0 32 32"
       fill="none"
       role="img"
-      aria-label="LicenseHunter"
+      aria-label="TraceMint"
     >
       <defs>
         <linearGradient id={topId} x1="5" y1="2" x2="27" y2="16" gradientUnits="userSpaceOnUse">
@@ -100,7 +100,7 @@ export function Logo({
       <LogoMark size={size} />
       {showWordmark && (
         <span className={`${TEXT_SIZES[size]} font-bold tracking-tight`}>
-          License<span className="text-gradient">Hunter</span>
+          Trace<span className="text-gradient">Mint</span>
         </span>
       )}
     </span>
