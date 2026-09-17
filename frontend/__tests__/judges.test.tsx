@@ -110,6 +110,7 @@ describe("Judges guide", () => {
     render(<JudgesPage />);
 
     expect(screen.queryByRole("button", { name: /Act as/ })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Judge access code")).toHaveAttribute("type", "password");
     await user.type(screen.getByLabelText("Judge access code"), " judge-code ");
     await user.click(screen.getByRole("button", { name: "Unlock demo roles" }));
     expect(state.unlock).toHaveBeenCalledWith("judge-code");

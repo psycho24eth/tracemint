@@ -107,6 +107,7 @@ function AccessForm() {
       <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
         <span className="font-medium">Judge access code</span>
         <input
+          type="password"
           value={code}
           onChange={(event) => setCode(event.target.value)}
           autoComplete="off"
