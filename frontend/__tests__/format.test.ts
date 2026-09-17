@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   addressLink,
+  creatorShare,
   feeBreakdown,
   formatDate,
   formatGen,
@@ -62,6 +63,12 @@ describe("feeBreakdown", () => {
 
   it("returns null when there is no fee category", () => {
     expect(feeBreakdown(10n * GEN, "NONE", "NONE")).toBeNull();
+  });
+});
+
+describe("creatorShare", () => {
+  it("calculates creator share as 97% of the fee", () => {
+    expect(creatorShare(45n * GEN)).toBe(43_650_000_000_000_000_000n);
   });
 });
 
