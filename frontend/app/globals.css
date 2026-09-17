@@ -30,106 +30,47 @@
 @custom-variant dark (&:is(.dark *));
 
 /* GenLayer Brand Colors 2025 */
-:root {
+:root,
+.dark {
   --font-body: 'Switzer';
   --font-display: 'Switzer';
 
-  /* Base colors - keep black background for dark theme */
-  --background: oklch(0 0 0);
-  --foreground: oklch(0.98 0 0);
-
-  /* Cards with navy tint per brand guidelines */
-  --card: oklch(0.25 0.08 265);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.25 0.08 265);
-  --popover-foreground: oklch(0.98 0 0);
-
-  /* Primary: Purple-Pink Gradient (#9B6AF6 → #E37DF7) */
-  --primary: oklch(0.65 0.22 300);
-  --primary-foreground: oklch(0.98 0 0);
-
-  /* Secondary: Navy Blue (#282B5D) */
-  --secondary: oklch(0.25 0.08 265);
-  --secondary-foreground: oklch(0.98 0 0);
-
-  /* Muted states */
-  --muted: oklch(0.18 0.04 265);
-  --muted-foreground: oklch(0.55 0 0);
-
-  /* Accent: Purple (brand primary) */
-  --accent: oklch(0.65 0.22 300);
-  --accent-foreground: oklch(0.98 0 0);
-
-  /* Brand Blue: #110FFF */
-  --blue: oklch(0.55 0.37 265);
-  --blue-foreground: oklch(0.98 0 0);
-
-  /* Brand Pink (gradient end): #E37DF7 */
-  --pink: oklch(0.78 0.18 330);
-
-  /* Destructive remains red */
-  --destructive: oklch(0.65 0.25 25);
-  --destructive-foreground: oklch(0.98 0 0);
-
-  /* Borders and inputs with navy tint */
-  --border: oklch(0.25 0.08 265);
-  --input: oklch(0.20 0.06 265);
-  --ring: oklch(0.65 0.22 300);
-
-  /* Chart colors using brand palette */
-  --chart-1: oklch(0.65 0.22 300); /* Purple */
-  --chart-2: oklch(0.78 0.18 330); /* Pink */
-  --chart-3: oklch(0.55 0.37 265); /* Blue */
-  --chart-4: oklch(0.25 0.08 265); /* Navy */
-  --chart-5: oklch(0.60 0.20 315); /* Purple-Pink mid */
-
+  --background: #05070d;
+  --foreground: #f1f5f9;
+  --card: #0c111d;
+  --card-foreground: #f1f5f9;
+  --popover: #0c111d;
+  --popover-foreground: #f1f5f9;
+  --primary: #00f2fe;
+  --primary-foreground: #031016;
+  --secondary: #111827;
+  --secondary-foreground: #f1f5f9;
+  --muted: #0f172a;
+  --muted-foreground: #94a3b8;
+  --accent: #00f2fe;
+  --accent-foreground: #031016;
+  --blue: #3b82f6;
+  --blue-foreground: #f1f5f9;
+  --pink: #7928ca;
+  --destructive: #f43f5e;
+  --destructive-foreground: #f1f5f9;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #00f2fe;
+  --chart-1: #00f2fe;
+  --chart-2: #7928ca;
+  --chart-3: #10b981;
+  --chart-4: #1e293b;
+  --chart-5: #f59e0b;
   --radius: 0.5rem;
-
-  /* Sidebar colors */
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.65 0.22 300);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-/* Dark theme (same as root for this project - already dark) */
-.dark {
-  --background: oklch(0 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.25 0.08 265);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.25 0.08 265);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.65 0.22 300);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.25 0.08 265);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.18 0.04 265);
-  --muted-foreground: oklch(0.55 0 0);
-  --accent: oklch(0.65 0.22 300);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.65 0.25 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.25 0.08 265);
-  --input: oklch(0.20 0.06 265);
-  --ring: oklch(0.65 0.22 300);
-  --chart-1: oklch(0.65 0.22 300);
-  --chart-2: oklch(0.78 0.18 330);
-  --chart-3: oklch(0.55 0.37 265);
-  --chart-4: oklch(0.25 0.08 265);
-  --chart-5: oklch(0.60 0.20 315);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.65 0.22 300);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.25 0.08 265);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.25 0.08 265);
-  --sidebar-ring: oklch(0.65 0.22 300);
+  --sidebar: #0c111d;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #00f2fe;
+  --sidebar-primary-foreground: #031016;
+  --sidebar-accent: #111827;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #00f2fe;
 }
 
 @theme inline {
@@ -178,6 +119,7 @@
 
   body {
     @apply text-foreground;
+    background-color: var(--background);
     font-family: var(--font-body), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
@@ -224,7 +166,8 @@
 
   /* Brand Gradient Utilities */
   .gradient-purple-pink {
-    background: linear-gradient(135deg, oklch(0.65 0.22 300) 0%, oklch(0.78 0.18 330) 100%);
+    background: linear-gradient(135deg, #00f2fe 0%, #7928ca 100%);
+    color: #031016;
   }
 
   .gradient-purple-blue {
@@ -233,26 +176,23 @@
 
   /* Clean Card Styles (replacing glass-morphism) */
   .brand-card {
-    background: oklch(0.25 0.08 265 / 0.6);
-    border: 1px solid oklch(0.30 0.10 265 / 0.4);
+    background: rgb(12 17 29 / 0.85);
+    border: 1px solid #1e293b;
     border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.2s ease, transform 0.2s ease;
   }
 
   .brand-card-hover:hover {
-    border-color: oklch(0.65 0.22 300 / 0.6);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1),
-                0 0 0 1px oklch(0.65 0.22 300 / 0.2);
+    border-color: rgb(0 242 254 / 0.5);
     transform: translateY(-2px);
   }
 
   /* Clean Navbar */
   .brand-navbar {
-    background: oklch(0 0 0 / 0.8);
+    background: rgb(5 7 13 / 0.85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid oklch(0.25 0.08 265 / 0.4);
+    border-bottom: 1px solid #1e293b;
   }
 
   /* Brand Button Styles - Primary (Purple Gradient) */

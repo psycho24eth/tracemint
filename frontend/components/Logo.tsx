@@ -1,100 +1,40 @@
-/**
- * GenLayer Logo Component
- * Per Brand Guidelines 2025
- *
- * Variants:
- * - "full": Strong Mark + Wordmark (for desktop/larger spaces)
- * - "mark": Strong Mark only (for mobile/compact spaces)
- * - "wordmark": Wordmark only (for specific cases)
- */
+type LogoSize = "sm" | "md" | "lg";
 
-import React from 'react';
+const MARK_SIZES: Record<LogoSize, string> = { sm: "h-5 w-5", md: "h-7 w-7", lg: "h-9 w-9" };
+const TEXT_SIZES: Record<LogoSize, string> = { sm: "text-base", md: "text-lg", lg: "text-2xl" };
 
-export type LogoVariant = 'full' | 'mark' | 'wordmark';
-export type LogoSize = 'sm' | 'md' | 'lg';
-export type LogoTheme = 'light' | 'dark';
-
-interface LogoProps {
-  variant?: LogoVariant;
-  size?: LogoSize;
-  theme?: LogoTheme;
-  className?: string;
-}
-
-const sizeMap = {
-  sm: { mark: 'w-5 h-5', text: 'text-base' },
-  md: { mark: 'w-6 h-6', text: 'text-xl' },
-  lg: { mark: 'w-8 h-8', text: 'text-2xl' },
-};
-
-export function Logo({
-  variant = 'full',
-  size = 'md',
-  theme = 'dark',
-  className = '',
-}: LogoProps) {
-  const colorClass = theme === 'dark' ? 'text-foreground' : 'text-background';
-  const { mark: markSize, text: textSize } = sizeMap[size];
-
-  // GenLayer Strong Mark (Triangle/Hands symbol)
-  const StrongMark = () => (
-    <svg
-      className={`${markSize} ${colorClass} transition-colors`}
-      viewBox="0 0 97.76 91.93"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="GenLayer Logo"
-    >
+export function LogoMark({ size = "md", className = "" }: { size?: LogoSize; className?: string }) {
+  return (
+    <svg className={`${MARK_SIZES[size]} ${className}`} viewBox="0 0 32 32" fill="none" aria-hidden="true">
       <path
-        fill="currentColor"
-        d="M44.26 32.35L27.72 67.12L43.29 74.9L0 91.93L44.26 0L44.26 32.35ZM53.5 32.35L70.04 67.12L54.47 74.9L97.76 91.93L53.5 0L53.5 32.35ZM48.64 43.78L58.33 62.94L48.64 67.69L39.47 62.92L48.64 43.78Z"
+        d="M16 2 4 7v8c0 7.2 5.1 13.4 12 15 6.9-1.6 12-7.8 12-15V7L16 2Z"
+        fill="var(--secondary)"
+        stroke="var(--accent)"
+        strokeWidth="1.5"
       />
+      <circle cx="16" cy="15" r="5.5" stroke="var(--accent)" strokeWidth="1.5" />
+      <path d="M16 6.5v4M16 19.5v4M7.5 15h4M20.5 15h4" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
+}
 
-  // Wordmark (using Space Grotesk from layout)
-  const Wordmark = () => (
-    <span
-      className={`${textSize} font-bold ${colorClass} font-[family-name:var(--font-display)] transition-colors`}
-      style={{ letterSpacing: '-0.02em' }}
-    >
-      GenLayer
+export function Logo({
+  size = "md",
+  showWordmark = true,
+  className = "",
+}: {
+  size?: LogoSize;
+  showWordmark?: boolean;
+  className?: string;
+}) {
+  return (
+    <span className={`inline-flex items-center gap-2 ${className}`}>
+      <LogoMark size={size} />
+      {showWordmark && (
+        <span className={`${TEXT_SIZES[size]} font-bold tracking-tight`}>
+          License<span className="text-accent">Hunter</span>
+        </span>
+      )}
     </span>
   );
-
-  if (variant === 'mark') {
-    return (
-      <div className={`inline-flex items-center ${className}`}>
-        <StrongMark />
-      </div>
-    );
-  }
-
-  if (variant === 'wordmark') {
-    return (
-      <div className={`inline-flex items-center ${className}`}>
-        <Wordmark />
-      </div>
-    );
-  }
-
-  // Full logo (default): Strong Mark + Wordmark
-  return (
-    <div className={`inline-flex items-center gap-2 ${className}`}>
-      <StrongMark />
-      <Wordmark />
-    </div>
-  );
-}
-
-// Convenience components for common use cases
-export function LogoFull(props: Omit<LogoProps, 'variant'>) {
-  return <Logo {...props} variant="full" />;
-}
-
-export function LogoMark(props: Omit<LogoProps, 'variant'>) {
-  return <Logo {...props} variant="mark" />;
-}
-
-export function LogoWordmark(props: Omit<LogoProps, 'variant'>) {
-  return <Logo {...props} variant="wordmark" />;
 }
