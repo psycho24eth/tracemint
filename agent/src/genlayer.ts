@@ -40,7 +40,9 @@ export async function balanceOf(address: string): Promise<bigint> {
 
 export const LIGHT_FEES = { leaderTimeunitsAllocation: 100, validatorTimeunitsAllocation: 200, rotations: [1] };
 // validatorTimeunitsAllocation capped at 600 by the chain (PhaseTimeoutOutOfBounds(1200,30,600) observed at 1200); see docs/platform-checks.md.
-export const HEAVY_FEES = { leaderTimeunitsAllocation: 600, validatorTimeunitsAllocation: 600, rotations: [1] };
+// Judgments compare model verdicts, and a leader whose model reads the page differently (or cannot see images)
+// is outvoted. Funding the chain's maximum of three rotations lets other leaders try before the claim is dropped.
+export const HEAVY_FEES = { leaderTimeunitsAllocation: 600, validatorTimeunitsAllocation: 600, rotations: [3] };
 export type FeePreset = typeof LIGHT_FEES;
 
 export async function quoteFees(client: StudioClient, preset: FeePreset) {

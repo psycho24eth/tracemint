@@ -192,7 +192,7 @@ export default function JudgesPage() {
           <Step
             index={2}
             title="Scan for copies"
-            expect="Two claims are filed; validators judge them in 1–2 minutes."
+            expect="Two claims are filed, and the page follows each one until validators decide (1–2 minutes). If they can't agree on a claim, nothing is recorded: press Scan again."
           >
             Open the demo work{" "}
             {demoWork ? (

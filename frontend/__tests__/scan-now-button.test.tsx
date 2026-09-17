@@ -1,11 +1,14 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 import ScanNowButton from "@/components/ScanNowButton";
+import { UNDECIDED_MESSAGE } from "@/lib/tx";
+
+const { refreshMock } = vi.hoisted(() => ({ refreshMock: vi.fn() }));
 
 vi.mock("@/lib/hooks/useLicenseHunter", () => ({
-  useRefreshLicenseHunter: () => vi.fn(),
+  useRefreshLicenseHunter: () => refreshMock,
 }));
 
 const mockFetch = vi.fn();
@@ -13,10 +16,12 @@ const mockFetch = vi.fn();
 describe("ScanNowButton", () => {
   beforeEach(() => {
     global.fetch = mockFetch as unknown as typeof fetch;
-    mockFetch.mockClear();
+    mockFetch.mockReset();
+    refreshMock.mockReset();
   });
 
   afterEach(() => {
+    cleanup();
     vi.clearAllMocks();
   });
 
@@ -56,6 +61,72 @@ describe("ScanNowButton", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Checked 10 candidate image/)).toBeInTheDocument();
+    });
+  });
+
+  it("follows each filed claim until validators decide", async () => {
+    const decisions: Record<string, object> = {
+      "/api/tx/0xshop": { hash: "0xshop", status: "UNDETERMINED", result: "FINISHED_WITH_RETURN", decided: true, successful: false },
+      "/api/tx/0xblog": { hash: "0xblog", status: "ACCEPTED", result: "FINISHED_WITH_RETURN", decided: true, successful: true },
+    };
+    mockFetch.mockImplementation(async (url: string) => ({
+      ok: true,
+      json: async () =>
+        url === "/api/scan"
+          ? {
+              candidates: 2,
+              filed: [
+                { hash: "0xshop", pageUrl: "https://example.com/shop", imageUrl: "https://example.com/a.png", distance: 9 },
+                { hash: "0xblog", pageUrl: "https://example.com/blog", imageUrl: "https://example.com/b.png", distance: 0 },
+              ],
+              skipped: 0,
+              errors: [],
+            }
+          : decisions[url],
+    }));
+
+    render(<ScanNowButton workId={1} useRunId={true} />);
+    await userEvent.setup().click(screen.getByText("Scan now"));
+
+    expect(await screen.findByText(UNDECIDED_MESSAGE)).toBeInTheDocument();
+    expect(await screen.findByText("Decided. See the result under Claims below.")).toBeInTheDocument();
+    expect(mockFetch).toHaveBeenCalledWith("/api/tx/0xshop", { cache: "no-store" });
+    expect(mockFetch).toHaveBeenCalledWith("/api/tx/0xblog", { cache: "no-store" });
+    expect(refreshMock).toHaveBeenCalledTimes(2);
+  });
+
+  describe("while a claim has no decision", () => {
+    const scanResponse = {
+      ok: true,
+      json: async () => ({
+        candidates: 1,
+        filed: [{ hash: "0xshop", pageUrl: "https://example.com/shop", imageUrl: "https://example.com/a.png", distance: 9 }],
+        skipped: 0,
+        errors: [],
+      }),
+    };
+
+    it("says validators are judging it", async () => {
+      mockFetch.mockImplementation((url: string) =>
+        url === "/api/scan" ? Promise.resolve(scanResponse) : new Promise(() => {}),
+      );
+
+      render(<ScanNowButton workId={1} useRunId={true} />);
+      await userEvent.setup().click(screen.getByText("Scan now"));
+
+      expect(await screen.findByText("Validators are judging this claim…")).toBeInTheDocument();
+    });
+
+    it("points to the explorer when the status lookup fails", async () => {
+      mockFetch.mockImplementation((url: string) =>
+        url === "/api/scan" ? Promise.resolve(scanResponse) : Promise.reject(new Error("offline")),
+      );
+
+      render(<ScanNowButton workId={1} useRunId={true} />);
+      await userEvent.setup().click(screen.getByText("Scan now"));
+
+      expect(await screen.findByText(/Still waiting for validators/)).toBeInTheDocument();
+      expect(refreshMock).toHaveBeenCalledTimes(1);
     });
   });
 
