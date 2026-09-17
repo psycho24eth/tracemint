@@ -155,6 +155,15 @@ export async function addGenLayerNetwork(): Promise<void> {
   }
 }
 
+// MetaMask reports an unknown chain as 4902, sometimes wrapped in a -32603 internal error.
+function isUnknownChainError(error: any): boolean {
+  return (
+    error?.code === 4902 ||
+    error?.data?.originalError?.code === 4902 ||
+    /unrecognized chain/i.test(String(error?.message ?? ""))
+  );
+}
+
 /**
  * Switch to GenLayer network
  */
@@ -171,9 +180,12 @@ export async function switchToGenLayerNetwork(): Promise<void> {
       params: [{ chainId: GENLAYER_CHAIN_ID_HEX }],
     });
   } catch (error: any) {
-    // If the chain is not added, add it
-    if (error.code === 4902) {
+    if (isUnknownChainError(error)) {
       await addGenLayerNetwork();
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: GENLAYER_CHAIN_ID_HEX }],
+      });
     } else if (error.code === 4001) {
       throw new Error("User rejected switching the network");
     } else {

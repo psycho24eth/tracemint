@@ -4,6 +4,7 @@ import { studioDevnet } from "genlayer-js/chains";
 // configuration while selecting the developer-facing Studio Next deployment.
 const DEFAULT_RPC_URL = "https://studio-next.genlayer.com/api";
 const DEFAULT_CHAIN_NAME = "GenLayer Studio Next";
+const EXPLORER_URL = "https://explorer-studio-dev.genlayer.com";
 
 export interface GenLayerNetworkOverrides {
   chainId?: string;
@@ -57,11 +58,11 @@ export function createGenLayerNetworkConfig(
   return {
     chain,
     wallet: {
-      chainId: `0x${chainId.toString(16).toUpperCase()}`,
+      chainId: `0x${chainId.toString(16)}`,
       chainName,
       nativeCurrency: chain.nativeCurrency,
       rpcUrls: [rpcUrl],
-      blockExplorerUrls: [],
+      blockExplorerUrls: [EXPLORER_URL],
     },
   };
 }

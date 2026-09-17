@@ -16,11 +16,12 @@ describe("GenLayer network configuration", () => {
       rpcUrls: { default: { http: ["https://studio-next.genlayer.com/api"] } },
     });
     expect(GENLAYER_CHAIN_ID).toBe(studioDevnet.id);
-    expect(GENLAYER_CHAIN_ID_HEX).toBe(`0x${studioDevnet.id.toString(16).toUpperCase()}`);
+    expect(GENLAYER_CHAIN_ID_HEX).toBe(`0x${studioDevnet.id.toString(16)}`);
     expect(GENLAYER_NETWORK).toMatchObject({
       chainId: GENLAYER_CHAIN_ID_HEX,
       chainName: GENLAYER_CHAIN.name,
       rpcUrls: [...GENLAYER_CHAIN.rpcUrls.default.http],
+      blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com"],
     });
   });
 

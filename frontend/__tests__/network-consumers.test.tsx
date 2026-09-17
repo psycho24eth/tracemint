@@ -96,4 +96,18 @@ describe("network consumers", () => {
       params: [GENLAYER_NETWORK],
     });
   });
+
+  it("adds the network when the wallet does not know the chain yet", async () => {
+    providerRequest
+      .mockRejectedValueOnce({ code: -32603, message: 'Unrecognized chain ID "0xf22d".' })
+      .mockResolvedValue(null);
+
+    await switchToGenLayerNetwork();
+
+    expect(providerRequest.mock.calls.map(([call]) => call.method)).toEqual([
+      "wallet_switchEthereumChain",
+      "wallet_addEthereumChain",
+      "wallet_switchEthereumChain",
+    ]);
+  });
 });
