@@ -28,7 +28,7 @@ Everything below runs on the live site. You do not need a wallet: the role switc
 5. Switch back to **Demo creator** and open **Dashboard**. Withdrawable earnings show **43.65 GEN**, which is 97% of the fee. Press **Withdraw**, and the GEN arrives in the creator wallet.
 6. Optional: scan again to get a fresh notice. Then, as the site owner, dispute it with the proof URL `/demo/permission`. Validators read the permission letter and withdraw the notice.
 
-Every step links to its transaction on the [Studio Next explorer](https://explorer-studio-dev.genlayer.com).
+Every step links to its transaction on the [Studio Next explorer](https://explorer-studio-dev.genlayer.com). A recorded run of this path, with every transaction and the validators' reasoning, is in [docs/judge-run.md](docs/judge-run.md).
 
 ## The six review questions
 
