@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useDemoMode } from "@/lib/demo/DemoModeProvider";
 
 import { AccountPanel } from "./AccountPanel";
+import { DemoRoleSwitcher } from "./DemoRoleSwitcher";
 import { Logo } from "./Logo";
 
 const LINKS = [
@@ -37,6 +39,7 @@ function NavLinks({ pathname, compact }: { pathname: string; compact?: boolean }
 
 export function Navbar() {
   const pathname = usePathname() ?? "";
+  const { role } = useDemoMode();
   return (
     <header className="brand-navbar sticky top-0 z-50">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
@@ -47,7 +50,8 @@ export function Navbar() {
           <NavLinks pathname={pathname} />
         </nav>
         <div className="flex items-center gap-2">
-          <AccountPanel />
+          <DemoRoleSwitcher />
+          {role === null && <AccountPanel />}
         </div>
       </div>
       <nav className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden" aria-label="Main">

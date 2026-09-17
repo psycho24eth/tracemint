@@ -13,7 +13,8 @@
     "spike": "tsx spikes/run-spike.ts",
     "deploy:contract": "tsx deploy/deploy-license-hunter.ts",
     "smoke": "tsx deploy/smoke.ts",
-    "scan": "npm run scan --workspace agent"
+    "scan": "npm run scan --workspace agent",
+    "sync:web": "tsx deploy/sync-frontend-env.ts"
   },
   "devDependencies": {
     "genlayer-js": "2.0.0-rc.1",
