@@ -36,6 +36,12 @@ Thumbs.db
 *.sw?
 /context
 
-
+# Local tooling
 .vercel
 .env*
+
+# Local development-agent files
+.claude/
+.superpowers/
+AGENTS.md
+CLAUDE.md

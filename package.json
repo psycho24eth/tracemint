@@ -15,7 +15,8 @@
     "smoke": "tsx deploy/smoke.ts",
     "scan": "npm run scan --workspace agent",
     "sync:web": "tsx deploy/sync-frontend-env.ts",
-    "demo-art": "tsx scripts/generate-demo-art.ts"
+    "demo-art": "tsx scripts/generate-demo-art.ts",
+    "seed": "tsx deploy/seed-demo.ts"
   },
   "devDependencies": {
     "genlayer-js": "2.0.0-rc.1",
