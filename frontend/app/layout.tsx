@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Unbounded } from "next/font/google";
 import "@genlayer/transaction-kit-react/styles.css";
 import "./globals.css";
 import { Providers } from "./providers";
+
+const heading = Unbounded({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-heading", display: "swap" });
 
 export const metadata: Metadata = {
   title: "TraceMint",
@@ -24,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={heading.variable}>
       <body>
         <Providers>
           {children}

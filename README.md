@@ -14,9 +14,9 @@
 
 ## Verify it in five minutes
 
-Everything below runs on the live site. You do not need a wallet: the role switcher in the top bar signs as a funded demo creator or demo site owner.
+Everything below runs on the live site. You do not need a wallet: the judge access code from the submission unlocks two funded demo roles, a creator and a site owner, which the server signs for. Regular visitors connect their own wallet instead.
 
-1. Open **/judges** and switch the role to **Demo creator**.
+1. Open **/judges**, enter the judge access code, and act as **Demo creator**. The judge bar under the menu shows the active role.
 2. Open the demo work **Cybernetic Horizon** and press **Scan now**.
    - The agent reads the two watched pages (a shop and a blog) and matches their images against the work with a perceptual hash.
    - It files a claim for each match.
@@ -78,7 +78,7 @@ If the accuser decides, the accused has no reason to trust the fee. In TraceMint
   - a 64-bit difference hash for matching
   - a CLI
   - a scheduled GitHub Action that scans every 30 minutes
-- Demo mode: rate-limited, server-signed demo roles.
+- Judge mode: rate-limited, server-signed demo roles, unlocked with an access code.
 - Pages for works, notices, licenses, and the creator dashboard.
 - Four evidence pages that validators read: portfolio, shop, blog, and permission letter.
 - An interactive 3D landing page.
@@ -134,7 +134,7 @@ Studio Next scripts read keys from a git-ignored `.env.local`:
 
 - **Watchlist only:** the agent scans the pages a creator lists. There is no web-wide image search.
 - **Not legal advice:** notices are automated findings.
-- **Test network:** Studio Next is a test network, and its GEN has no value. The demo roles sign with test keys held by the server and are rate-limited.
+- **Test network:** Studio Next is a test network, and its GEN has no value. The demo roles sign with test keys held by the server, need the judge access code, and are rate-limited.
 - **Vision input:** Studio Next's model rejects raw downloaded image bytes, so validators compare browser screenshots of the image URLs.
 - **Payouts need a message fee allocation:**
   - Studio Next only delivers a contract-emitted payout when the transaction declares a fee allocation for the message. The server builds that allocation with `estimateTransactionFeesForWrite`.

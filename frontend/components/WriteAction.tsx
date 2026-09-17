@@ -50,12 +50,12 @@ function blockedReason(options: {
     if (options.requiredRole === options.role) return null;
     return options.requiredRole
       ? `Switch to the ${DEMO_ROLE_LABELS[options.requiredRole].toLowerCase()} role to do this.`
-      : "Switch to your wallet to do this.";
+      : "Exit judge mode to use your wallet for this.";
   }
   if (WALLET_BLOCKED_METHODS.has(options.method)) {
-    return "Wallet payouts need a message fee allocation the Transaction Kit can't send yet. Switch to the demo creator role to withdraw.";
+    return "Withdrawing from a connected wallet isn't supported on Studio Next yet: payouts need a message fee allocation that wallet signing can't send.";
   }
-  if (!options.address) return "Connect a wallet, or switch to a demo role.";
+  if (!options.address) return "Connect your wallet to continue.";
   if (!options.hasKit) return "Your wallet is not ready. Reconnect it and try again.";
   return null;
 }
@@ -79,7 +79,7 @@ export function WriteAction({
   onSuccess,
   variant = "gradient",
 }: WriteActionProps) {
-  const { role } = useDemoMode();
+  const { role, accessCode } = useDemoMode();
   const { address } = useWallet();
   const kit = useTransactionKit(address);
   const refresh = useRefreshLicenseHunter();
@@ -113,7 +113,7 @@ export function WriteAction({
     setPhase({ name: "submitting" });
     let hash: string | undefined;
     try {
-      hash = await submitDemoWrite({ role: demoRole, method, args, value });
+      hash = await submitDemoWrite({ role: demoRole, method, args, value, accessCode: accessCode ?? undefined });
       setPhase({ name: "pending", hash });
       const status = await waitForDemoTx(hash);
       if (status.successful) {

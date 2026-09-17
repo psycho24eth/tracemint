@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useDemoMode } from "@/lib/demo/DemoModeProvider";
 
 import { AccountPanel } from "./AccountPanel";
-import { DemoRoleSwitcher } from "./DemoRoleSwitcher";
+import { JudgeModeBar } from "./JudgeModeBar";
 import { Logo } from "./Logo";
 
 const LINKS = [
@@ -49,14 +49,12 @@ export function Navbar() {
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
           <NavLinks pathname={pathname} />
         </nav>
-        <div className="flex items-center gap-2">
-          <DemoRoleSwitcher />
-          {role === null && <AccountPanel />}
-        </div>
+        <div className="flex items-center gap-2">{role === null && <AccountPanel />}</div>
       </div>
       <nav className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden" aria-label="Main">
         <NavLinks pathname={pathname} compact />
       </nav>
+      <JudgeModeBar />
     </header>
   );
 }

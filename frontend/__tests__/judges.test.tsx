@@ -6,6 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   role: null as null | "creator" | "site-owner",
   setRole: vi.fn(),
+  accessCode: "judge-code" as string | null,
+  unlock: vi.fn(),
+  exit: vi.fn(),
 }));
 
 vi.mock("@/components/PageShell", () => ({
@@ -17,6 +20,9 @@ vi.mock("@/lib/demo/DemoModeProvider", () => {
     useDemoMode: () => ({
       role: state.role,
       setRole: state.setRole,
+      accessCode: state.accessCode,
+      unlock: state.unlock,
+      exit: state.exit,
     }),
   };
 });
@@ -62,7 +68,9 @@ import JudgesPage from "../app/judges/page";
 
 beforeEach(() => {
   state.role = null;
+  state.accessCode = "judge-code";
   state.setRole.mockClear();
+  state.unlock.mockReset();
 });
 
 afterEach(() => {
@@ -93,6 +101,18 @@ describe("Judges guide", () => {
       await user.click(siteOwnerButton);
       expect(state.setRole).toHaveBeenCalledWith("site-owner");
     }
+  });
+
+  it("asks for the access code before offering demo roles", async () => {
+    state.accessCode = null;
+    state.unlock.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    render(<JudgesPage />);
+
+    expect(screen.queryByRole("button", { name: /Act as/ })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("Judge access code"), " judge-code ");
+    await user.click(screen.getByRole("button", { name: "Unlock demo roles" }));
+    expect(state.unlock).toHaveBeenCalledWith("judge-code");
   });
 
   it("links to the demo work at /works/1", () => {

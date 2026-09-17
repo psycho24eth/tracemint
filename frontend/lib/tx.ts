@@ -22,12 +22,15 @@ export function outcomeMessage(status: TxStatus): string | null {
 }
 
 export async function submitDemoWrite(
-  request: { role: DemoRole; method: string; args: unknown[]; value?: bigint },
+  request: { role: DemoRole; method: string; args: unknown[]; value?: bigint; accessCode?: string },
   fetchFn: typeof fetch = fetch,
 ): Promise<string> {
   const response = await fetchFn("/api/demo/write", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(request.accessCode ? { "x-demo-access": request.accessCode } : {}),
+    },
     body: JSON.stringify({
       role: request.role,
       method: request.method,

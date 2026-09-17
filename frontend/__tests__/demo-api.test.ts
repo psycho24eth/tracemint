@@ -26,17 +26,31 @@ vi.mock("@/lib/genlayer/tx-utils", () => ({
 const CONTRACT = "0x00000000000000000000000000000000000000c0";
 const HASH = `0x${"ab".repeat(32)}`;
 const GEN = 10n ** 18n;
+const ACCESS_CODE = "judge-code";
 
 async function writeRoute() {
   vi.resetModules();
   return import("../app/api/demo/write/route");
 }
 
-function post(body: unknown) {
+function post(body: unknown, accessCode: string | null = ACCESS_CODE) {
   return new Request("http://localhost/api/demo/write", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...(accessCode ? { "x-demo-access": accessCode } : {}) },
     body: JSON.stringify(body),
+  });
+}
+
+async function accessRoute() {
+  vi.resetModules();
+  return import("../app/api/demo/access/route");
+}
+
+function unlockRequest(code: unknown) {
+  return new Request("http://localhost/api/demo/access", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ code }),
   });
 }
 
@@ -45,12 +59,37 @@ beforeEach(() => {
   vi.stubEnv("LICENSE_HUNTER_ADDRESS", CONTRACT);
   vi.stubEnv("DEMO_CREATOR_PRIVATE_KEY", "0xcreator-key");
   vi.stubEnv("DEMO_SITE_OWNER_PRIVATE_KEY", "0xsite-owner-key");
+  vi.stubEnv("DEMO_ACCESS_CODE", ACCESS_CODE);
   mocks.clientFor.mockClear();
   mocks.submitWrite.mockReset().mockResolvedValue(HASH);
   mocks.getTransaction.mockReset();
 });
 
+describe("POST /api/demo/access", () => {
+  it("accepts the configured judge access code", async () => {
+    const { POST } = await accessRoute();
+    expect((await POST(unlockRequest(ACCESS_CODE))).status).toBe(204);
+  });
+
+  it("rejects a wrong code, and every code when none is configured", async () => {
+    const { POST } = await accessRoute();
+    expect((await POST(unlockRequest("guess"))).status).toBe(401);
+
+    vi.stubEnv("DEMO_ACCESS_CODE", "");
+    expect((await POST(unlockRequest(""))).status).toBe(401);
+  });
+});
+
 describe("POST /api/demo/write", () => {
+  it("requires the judge access code", async () => {
+    const { POST } = await writeRoute();
+
+    const response = await POST(post({ role: "creator", method: "withdraw_earnings", args: [] }, null));
+
+    expect(response.status).toBe(401);
+    expect(mocks.submitWrite).not.toHaveBeenCalled();
+  });
+
   it("signs a license payment with the site owner's key", async () => {
     const { POST } = await writeRoute();
 

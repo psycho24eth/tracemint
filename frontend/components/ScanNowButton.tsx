@@ -31,7 +31,7 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
     try {
       const body: { workId: number; runId?: string } = { workId };
       if (useRunId) {
-        body.runId = crypto.randomUUID();
+        body.runId = crypto.randomUUID().replaceAll("-", "").slice(0, 12);
       }
 
       const response = await fetch("/api/scan", {

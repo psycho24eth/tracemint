@@ -33,7 +33,7 @@
 :root,
 .dark {
   --font-body: 'Switzer';
-  --font-display: 'Switzer';
+  --font-display: var(--font-heading), 'Switzer';
 
   --background: #05070d;
   --foreground: #f1f5f9;

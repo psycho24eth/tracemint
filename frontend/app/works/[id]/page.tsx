@@ -25,28 +25,38 @@ export default function WorkDetailPage() {
   return (
     <PageShell>
       <div className="space-y-8">
-        <div className="glass">
+        <div className="glass grid gap-6 p-5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-center">
           <img
             src={work.imageUrl}
             alt={work.title}
-            className="w-full max-h-96 object-cover rounded mb-6"
+            className="aspect-[3/2] w-full rounded-lg bg-black/40 object-contain"
           />
-          <div className="space-y-3">
-            <h1 className="text-3xl font-bold">{work.title}</h1>
-            <p className="text-lg font-semibold text-gradient">{formatGen(work.basePrice)}</p>
-            <p className="text-sm">
-              Creator:{" "}
-              <a href={addressLink(work.creator)} target="_blank" rel="noreferrer" className="underline">
-                {shortAddress(work.creator)}
-              </a>
-            </p>
-            <p className="text-sm">
-              Portfolio:{" "}
-              <a href={work.portfolioUrl} target="_blank" rel="noreferrer" className="underline">
-                {work.portfolioUrl}
-              </a>
-            </p>
-            <p className="text-sm">Terms: {work.terms}</p>
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Registered work #{work.id}</p>
+            <h1 className="text-3xl leading-tight md:text-4xl">{work.title}</h1>
+            <p className="text-2xl font-semibold text-gradient">{formatGen(work.basePrice)}</p>
+            <dl className="space-y-2 text-sm">
+              <div className="flex gap-2">
+                <dt className="text-muted-foreground">Creator</dt>
+                <dd>
+                  <a href={addressLink(work.creator)} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+                    {shortAddress(work.creator)}
+                  </a>
+                </dd>
+              </div>
+              <div className="flex gap-2">
+                <dt className="text-muted-foreground">Portfolio</dt>
+                <dd className="min-w-0 break-all">
+                  <a href={work.portfolioUrl} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+                    {work.portfolioUrl}
+                  </a>
+                </dd>
+              </div>
+              <div className="flex gap-2">
+                <dt className="text-muted-foreground">Terms</dt>
+                <dd>{work.terms}</dd>
+              </div>
+            </dl>
           </div>
         </div>
 

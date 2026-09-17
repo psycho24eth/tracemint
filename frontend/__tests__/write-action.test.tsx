@@ -137,7 +137,7 @@ describe("WriteAction in wallet mode", () => {
     render(<WriteAction method="update_watchlist" args={[1, []]} label="Save watchlist" />);
 
     expect(screen.getByRole("button", { name: "Save watchlist" })).toBeDisabled();
-    expect(screen.getByText("Connect a wallet, or switch to a demo role.")).toBeInTheDocument();
+    expect(screen.getByText("Connect your wallet to continue.")).toBeInTheDocument();
   });
 
   it("explains that wallet payouts go through the demo creator role", () => {
@@ -147,7 +147,7 @@ describe("WriteAction in wallet mode", () => {
     expect(screen.getByRole("button", { name: "Withdraw" })).toBeDisabled();
     expect(
       screen.getByText(
-        "Wallet payouts need a message fee allocation the Transaction Kit can't send yet. Switch to the demo creator role to withdraw.",
+        "Withdrawing from a connected wallet isn't supported on Studio Next yet: payouts need a message fee allocation that wallet signing can't send.",
       ),
     ).toBeInTheDocument();
   });

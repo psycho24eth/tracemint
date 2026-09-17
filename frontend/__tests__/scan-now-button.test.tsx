@@ -51,6 +51,8 @@ describe("ScanNowButton", () => {
         body: expect.stringContaining('"workId":1'),
       });
     });
+    const { runId } = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(runId).toMatch(/^[a-z0-9-]{1,32}$/i);
 
     await waitFor(() => {
       expect(screen.getByText(/Checked 10 candidate image/)).toBeInTheDocument();
