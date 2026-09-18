@@ -41,6 +41,16 @@ export const useLicenseForClaim = (claimId: number, enabled: boolean) =>
 export const useEarnings = (creator: string | null) =>
   useContractQuery("earnings", [creator], (contract) => contract.getEarnings(creator as string), Boolean(creator));
 export const useStats = () => useContractQuery("stats", [], (contract) => contract.getStats());
+export const useLicensesFor = (licensee: string | null) =>
+  useContractQuery("licenses-for", [licensee], (contract) => contract.listLicenses(licensee as string), Boolean(licensee));
+
+/** The newest licenses, newest first. The contract has no list-all view, so this walks back from the latest id. */
+export const useLatestLicenses = (count: number) =>
+  useContractQuery("licenses-latest", [count], async (contract) => {
+    const { licenses } = await contract.getStats();
+    const ids = Array.from({ length: Math.min(count, licenses) }, (_, index) => licenses - index);
+    return Promise.all(ids.map((id) => contract.getLicense(id)));
+  });
 
 export function useRefreshLicenseHunter() {
   const queryClient = useQueryClient();

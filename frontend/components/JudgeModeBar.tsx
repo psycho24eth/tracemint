@@ -10,11 +10,14 @@ export function JudgeModeBar() {
   if (!accessCode) return null;
 
   return (
-    <div className="border-t border-white/10 bg-cyan-400/5">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 text-xs">
-        <span className="font-semibold uppercase tracking-[0.15em] text-accent">Judge mode</span>
-        <span className="text-muted-foreground">Acting as</span>
-        <div role="radiogroup" aria-label="Act as" className="flex rounded-md border border-border p-0.5">
+    <div className="border-t border-signal/40 bg-signal/[0.07]">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-xs md:px-6">
+        <span className="flex items-center gap-2 font-bold uppercase tracking-[0.16em] text-signal">
+          <span className="live-dot" aria-hidden="true" />
+          Judge mode
+        </span>
+        <span className="t-label">Acting as</span>
+        <div role="radiogroup" aria-label="Act as" className="flex border border-line">
           {ROLES.map((option) => (
             <button
               key={option}
@@ -22,15 +25,19 @@ export function JudgeModeBar() {
               role="radio"
               aria-checked={role === option}
               onClick={() => setRole(option)}
-              className={`whitespace-nowrap rounded px-2 py-1 transition-colors ${
-                role === option ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+              className={`whitespace-nowrap px-3 py-1 uppercase tracking-[0.1em] transition-colors ${
+                role === option ? "bg-signal text-background" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {DEMO_ROLE_LABELS[option]}
             </button>
           ))}
         </div>
-        <button type="button" onClick={exit} className="ml-auto text-muted-foreground hover:text-foreground">
+        <button
+          type="button"
+          onClick={exit}
+          className="ml-auto uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-foreground"
+        >
           Exit judge mode
         </button>
       </div>

@@ -1,42 +1,33 @@
 "use client";
 
-import { useWorks } from "@/lib/hooks/useLicenseHunter";
-import { formatGen, shortAddress } from "@/lib/format";
+import { CardSkeleton } from "@/components/cards/Collectible";
+import { WorkCard } from "@/components/cards/WorkCard";
 import { PageShell } from "@/components/PageShell";
 import RegisterWorkForm from "@/components/RegisterWorkForm";
-import Link from "next/link";
+import { SectionHeading } from "@/components/SectionHeading";
+import { useWorks } from "@/lib/hooks/useLicenseHunter";
 
 export default function WorksPage() {
   const { data: works, isLoading, error } = useWorks();
 
   return (
     <PageShell>
-      <div className="space-y-8">
-        <h1 className="text-3xl font-bold">Registered works</h1>
+      <SectionHeading as="h1" kicker="The collection" title="Registered works">
+        Each work was registered by a creator whose wallet validators found on their portfolio page. The agent watches the
+        pages listed for each one.
+      </SectionHeading>
 
-        {isLoading && <p className="text-muted-foreground">Loading works…</p>}
+      {error && <p className="mt-8 text-destructive">{error.message}</p>}
+      {!isLoading && !error && works?.length === 0 && <p className="mt-8 text-muted-foreground">No works registered yet.</p>}
 
-        {error && <p className="text-destructive">{error.message}</p>}
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {isLoading && [0, 1, 2].map((index) => <CardSkeleton key={index} label="Work" />)}
+        {works?.map((work) => (
+          <WorkCard key={work.id} work={work} />
+        ))}
+      </div>
 
-        {works && works.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {works.map((work) => (
-              <Link key={work.id} href={`/works/${work.id}`}>
-                <div className="brand-card cursor-pointer hover:opacity-80 transition">
-                  <img
-                    src={work.imageUrl}
-                    alt={work.title}
-                    className="w-full aspect-square object-cover rounded mb-4"
-                  />
-                  <h3 className="font-bold text-lg mb-1">{work.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-1">{formatGen(work.basePrice)}</p>
-                  <p className="text-xs text-muted-foreground">by {shortAddress(work.creator)}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-
+      <div className="mt-20">
         <RegisterWorkForm />
       </div>
     </PageShell>

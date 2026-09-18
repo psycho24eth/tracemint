@@ -23,6 +23,8 @@ vi.mock("@/lib/hooks/useLicenseHunter", () => ({
     data: creator && !state.zeroEarnings ? 43_650_000_000_000_000_000n : 0n,
     isLoading: false,
   }),
+  useLicensesFor: () => ({ data: [], isLoading: false }),
+  useWorks: () => ({ data: [], isLoading: false }),
 }));
 
 vi.mock("@/lib/hooks/useCreatorLedger", () => ({

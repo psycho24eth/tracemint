@@ -8,7 +8,6 @@ import { WriteAction } from "./WriteAction";
 
 export function WatchlistEditor({ work }: { work: Work }) {
   const [watchUrlsText, setWatchUrlsText] = useState(work.watchUrls.join("\n"));
-  const [error, setError] = useState<string | null>(null);
 
   const watchUrls = useMemo(() => parseWatchUrls(watchUrlsText), [watchUrlsText]);
 
@@ -26,29 +25,25 @@ export function WatchlistEditor({ work }: { work: Work }) {
   }, [watchUrls]);
 
   return (
-    <div className="glass space-y-4">
-      <h3 className="font-bold">Watched URLs</h3>
-      <textarea
-        value={watchUrlsText}
-        onChange={(e) => {
-          setWatchUrlsText(e.target.value);
-          setError(null);
-        }}
-        placeholder="https://example.com&#10;https://another.com"
-        className="w-full rounded border border-input bg-background px-3 py-2 text-sm"
-        rows={4}
-      />
-      {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
-      <WriteAction
-        method="update_watchlist"
-        args={[work.id, watchUrls]}
-        label="Save watchlist"
-        disabled={!isValid}
-        onBeforeSubmit={() => {
-          setError(null);
-          return true;
-        }}
-      />
-    </div>
+    <section className="panel" aria-labelledby={`watchlist-${work.id}`}>
+      <div className="panel-head">
+        <h2 id={`watchlist-${work.id}`} className="t-label text-foreground">
+          Watched URLs
+        </h2>
+        <span className="t-label">{watchUrls.length} / 10</span>
+      </div>
+      <div className="space-y-4 p-4">
+        <textarea
+          value={watchUrlsText}
+          onChange={(e) => setWatchUrlsText(e.target.value)}
+          placeholder="https://example.com&#10;https://another.com"
+          className="t-field"
+          rows={4}
+          aria-label="Watched URLs, one per line"
+        />
+        {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+        <WriteAction method="update_watchlist" args={[work.id, watchUrls]} label="Save watchlist" variant="outline" disabled={!isValid} />
+      </div>
+    </section>
   );
 }

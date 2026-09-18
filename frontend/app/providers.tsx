@@ -34,10 +34,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
         offset="80px"
         toastOptions={{
           style: {
-            background: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            color: 'hsl(var(--foreground))',
-            boxShadow: '0 8px 32px hsl(var(--background) / 0.8)',
+            background: 'var(--card)',
+            border: '1px solid var(--line-strong)',
+            borderRadius: '0',
+            color: 'var(--foreground)',
+            fontFamily: 'var(--font-mono)',
+            boxShadow: '6px 6px 0 rgb(255 90 31 / 0.85)',
           },
         }}
       />

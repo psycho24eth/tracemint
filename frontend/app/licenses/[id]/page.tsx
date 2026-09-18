@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import type { ReactNode } from "react";
 
+import { TiltCard } from "@/components/cards/Collectible";
+import { LicenseFace } from "@/components/cards/LicenseCard";
 import { PageShell } from "@/components/PageShell";
-import { addressLink, creatorShare, formatDate, formatGen, shortAddress } from "@/lib/format";
+import { addressLink, creatorShare, formatDate, formatGen, pageLabel, shortAddress } from "@/lib/format";
 import { getContractAddress } from "@/lib/genlayer/client";
 import { useLicense, useWork } from "@/lib/hooks/useLicenseHunter";
 
@@ -18,7 +21,7 @@ export default function LicensePage() {
   if (license.isLoading) {
     return (
       <PageShell>
-        <div className="text-muted-foreground">Loading license…</div>
+        <p className="t-label">Loading license #{licenseId}…</p>
       </PageShell>
     );
   }
@@ -26,70 +29,75 @@ export default function LicensePage() {
   if (!license.data) {
     return (
       <PageShell>
-        <div className="text-destructive">License not found.</div>
+        <p className="text-destructive">License not found.</p>
       </PageShell>
     );
   }
 
   const data = license.data;
-  const workTitle = work.data?.title ?? "Work";
-  const creatorAmount = creatorShare(data.amount);
+  const rows: [string, ReactNode][] = [
+    [
+      "Work",
+      <Link key="work" href={`/works/${data.workId}`} className="t-link">
+        {work.data?.title ?? `Work #${data.workId}`}
+      </Link>,
+    ],
+    [
+      "Licensed page",
+      <a key="page" href={data.pageUrl} target="_blank" rel="noreferrer" className="t-link break-all">
+        {pageLabel(data.pageUrl)}
+      </a>,
+    ],
+    [
+      "Licensee",
+      <a key="licensee" href={addressLink(data.licensee)} target="_blank" rel="noreferrer" className="t-link">
+        {shortAddress(data.licensee)}
+      </a>,
+    ],
+    ["Amount paid", formatGen(data.amount)],
+    ["Creator's share", formatGen(creatorShare(data.amount))],
+    ["Issued", formatDate(data.issuedAt)],
+    ["Expires", formatDate(data.expiresAt)],
+    [
+      "Notice",
+      <Link key="notice" href={`/notices/${data.claimId}`} className="t-link">
+        #{data.claimId}
+      </Link>,
+    ],
+  ];
 
   return (
     <PageShell>
-      <div className="mx-auto max-w-2xl">
-        <div className="glass rounded-lg p-8 space-y-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gradient">License #{data.id}</h1>
-          </div>
+      <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+        <div className="mx-auto w-full max-w-sm lg:col-span-5">
+          <TiltCard max={16}>
+            <LicenseFace license={data} work={work.data} />
+          </TiltCard>
+          <p className="t-label mt-4 text-center">Move your cursor over the license</p>
+        </div>
 
-          <div className="space-y-4 border-t border-border pt-6">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Work</span>
-              <span className="font-medium">{workTitle}</span>
-            </div>
+        <div className="lg:col-span-7">
+          <p className="t-label">
+            <span className="t-index mr-2">Certificate</span>
+            12-month license
+          </p>
+          <h1 className="display-condensed mt-3 text-7xl md:text-8xl">License #{data.id}</h1>
 
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Licensed page</span>
-              <Link href={data.pageUrl} target="_blank" rel="noreferrer" className="underline hover:text-accent">
-                {new URL(data.pageUrl).hostname}
-              </Link>
-            </div>
+          <dl className="mt-8 divide-y divide-[var(--line)] border-y border-line text-sm">
+            {rows.map(([label, value]) => (
+              <div key={label} className="flex items-baseline justify-between gap-6 py-3">
+                <dt className="t-label">{label}</dt>
+                <dd className="text-right">{value}</dd>
+              </div>
+            ))}
+          </dl>
 
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Licensee</span>
-              <Link href={addressLink(data.licensee)} target="_blank" rel="noreferrer" className="underline">
-                {shortAddress(data.licensee)}
-              </Link>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Amount paid</span>
-              <span className="font-medium">{formatGen(data.amount)}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Creator's share</span>
-              <span className="font-medium">{formatGen(creatorAmount)}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Issued</span>
-              <span className="font-mono text-sm">{formatDate(data.issuedAt)}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Expires</span>
-              <span className="font-mono text-sm">{formatDate(data.expiresAt)}</span>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
+          <p className="mt-6 text-xs text-muted-foreground">
             Issued by TraceMint on GenLayer Studio Next.{" "}
-            <Link href={addressLink(getContractAddress())} target="_blank" rel="noreferrer" className="underline">
+            <a href={addressLink(getContractAddress())} target="_blank" rel="noreferrer" className="t-link">
               View contract
-            </Link>
-          </div>
+            </a>
+          </p>
         </div>
       </div>
     </PageShell>

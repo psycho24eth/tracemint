@@ -1,11 +1,11 @@
 {
   "name": "TraceMint",
   "short_name": "TraceMint",
-  "description": "AI-powered football match predictions on GenLayer blockchain",
+  "description": "An AI agent finds copies of your art, GenLayer validators judge them, and site owners settle with an on-chain license.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#05070d",
-  "theme_color": "#05070d",
+  "background_color": "#0b0b0b",
+  "theme_color": "#0b0b0b",
   "icons": [
     {
       "src": "/favicon.svg",

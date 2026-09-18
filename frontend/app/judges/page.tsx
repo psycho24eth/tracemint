@@ -38,19 +38,19 @@ function Step({
   children: ReactNode;
 }) {
   return (
-    <li className="glass relative flex gap-4 p-5">
-      <span className="font-[family-name:var(--font-display)] text-3xl font-bold leading-none text-gradient">
+    <li className="relative grid grid-cols-[3.5rem_1fr] gap-4 border-b border-line py-6 last:border-b-0 md:grid-cols-[5rem_1fr]">
+      <span className="display-wide text-3xl leading-none text-signal md:text-4xl">
         {String(index).padStart(2, "0")}
       </span>
       <div className="space-y-2">
-        <h3 className="text-base">{title}</h3>
+        <h3 className="display-condensed text-3xl md:text-4xl">{title}</h3>
         <div className="text-sm leading-relaxed text-muted-foreground">
           {children}
         </div>
         {expect && (
-          <p className="flex items-start gap-2 text-sm text-foreground">
+          <p className="flex items-start gap-2 border-l-2 border-mint/60 pl-3 text-sm text-foreground">
             <CheckCircle2
-              className="mt-0.5 h-4 w-4 shrink-0 text-accent"
+              className="mt-0.5 h-4 w-4 shrink-0 text-mint"
               aria-hidden="true"
             />
             {expect}
@@ -73,7 +73,7 @@ function RoleLink({
     <button
       type="button"
       onClick={() => setRole(role)}
-      className="font-medium text-accent underline-offset-4 hover:underline"
+      className="font-medium text-signal underline-offset-4 hover:underline"
     >
       {children}
     </button>
@@ -102,23 +102,23 @@ function AccessForm() {
   return (
     <form
       onSubmit={submit}
-      className="glass flex max-w-xl flex-wrap items-end gap-3 p-5"
+      className="panel flex max-w-xl flex-wrap items-end gap-4 p-5"
     >
-      <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
-        <span className="font-medium">Judge access code</span>
+      <label className="flex min-w-0 flex-1 flex-col gap-2">
+        <span className="t-label text-foreground/80">Judge access code</span>
         <input
           type="password"
           value={code}
           onChange={(event) => setCode(event.target.value)}
           autoComplete="off"
-          className="rounded-md border border-white/15 bg-transparent px-3 py-2 outline-none focus:border-accent"
+          className="t-field"
           placeholder="From the submission"
         />
       </label>
       <button
         type="submit"
         disabled={busy || !code.trim()}
-        className="btn-gradient rounded-md px-4 py-2 text-sm font-semibold disabled:opacity-50"
+        className="btn-signal"
       >
         {busy ? "Checking…" : "Unlock demo roles"}
       </button>
@@ -141,11 +141,12 @@ export default function JudgesPage() {
 
   return (
     <PageShell>
-      <header className="mb-10 space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+      <header className="mb-12 space-y-6">
+        <p className="t-label">
+          <span className="t-index mr-2">00</span>
           For judges
         </p>
-        <h1 className="text-3xl leading-tight md:text-5xl text-gradient">
+        <h1 className="display-condensed max-w-4xl text-6xl md:text-8xl">
           Verify TraceMint in five minutes
         </h1>
         <p className="max-w-2xl text-muted-foreground">
@@ -163,10 +164,10 @@ export default function JudgesPage() {
                 type="button"
                 onClick={() => setRole(demoRole)}
                 disabled={!demoAddress(demoRole)}
-                className={`rounded-full border px-5 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                className={`border px-5 py-2.5 text-xs uppercase tracking-[0.12em] transition-colors disabled:opacity-50 ${
                   role === demoRole
-                    ? "border-transparent bg-accent text-accent-foreground"
-                    : "border-white/15 hover:border-accent/60"
+                    ? "border-signal bg-signal text-background"
+                    : "border-line hover:border-signal hover:text-signal"
                 }`}
               >
                 Act as {DEMO_ROLE_LABELS[demoRole]}
@@ -175,7 +176,7 @@ export default function JudgesPage() {
             <button
               type="button"
               onClick={exit}
-              className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+              className="px-3 py-2 text-xs uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground"
             >
               Exit judge mode
             </button>
@@ -183,8 +184,8 @@ export default function JudgesPage() {
         )}
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-        <ol className="space-y-4">
+      <div className="grid gap-10 lg:grid-cols-[1fr_340px]">
+        <ol className="border-t border-line">
           <Step index={1} title="Unlock judge mode">
             Enter the access code above, then act as{" "}
             <RoleLink role="creator">Demo creator</RoleLink>. The judge bar
@@ -199,7 +200,7 @@ export default function JudgesPage() {
             {demoWork ? (
               <Link
                 href={`/works/${demoWork.id}`}
-                className="font-medium text-accent underline-offset-4 hover:underline"
+                className="t-link font-medium text-foreground"
               >
                 Cybernetic Horizon at /works/{demoWork.id}
               </Link>
@@ -233,7 +234,7 @@ export default function JudgesPage() {
             Switch to <RoleLink role="creator">Demo creator</RoleLink>, open{" "}
             <Link
               href="/dashboard"
-              className="font-medium text-accent underline-offset-4 hover:underline"
+              className="t-link font-medium text-foreground"
             >
               Dashboard
             </Link>
@@ -245,7 +246,7 @@ export default function JudgesPage() {
             the proof URL{" "}
             <Link
               href={siteUrl("/demo/permission")}
-              className="break-all text-accent underline-offset-4 hover:underline"
+              className="t-link break-all text-foreground"
             >
               {siteUrl("/demo/permission")}
             </Link>
@@ -254,27 +255,27 @@ export default function JudgesPage() {
         </ol>
 
         <aside className="space-y-4">
-          <div className="glass space-y-2 p-5 text-sm">
-            <h2 className="text-sm">Contract</h2>
+          <div className="panel space-y-3 p-5 text-sm">
+            <h2 className="t-label text-foreground">Contract</h2>
             <Link
               href={addressLink(contract)}
               target="_blank"
               rel="noreferrer"
-              className="block break-all font-mono text-xs text-accent hover:underline"
+              className="t-link block break-all text-xs text-signal"
             >
               {contract}
             </Link>
             <p className="text-muted-foreground">Studio Next, chain 61997</p>
           </div>
 
-          <div className="glass space-y-3 p-5">
-            <h2 className="text-sm">Evidence pages</h2>
+          <div className="panel space-y-3 p-5">
+            <h2 className="t-label text-foreground">Evidence pages</h2>
             <nav className="space-y-2" aria-label="Evidence pages">
               {DEMO_PAGES.map(({ path, label, note }) => (
                 <Link
                   key={path}
                   href={path}
-                  className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-sm transition-colors hover:border-accent/60"
+                  className="flex items-center justify-between border border-line px-3 py-2 text-sm transition-colors hover:border-signal"
                 >
                   <span>
                     <span className="block font-medium">{label}</span>

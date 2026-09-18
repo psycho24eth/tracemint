@@ -1,45 +1,56 @@
 "use client";
 
-import { Badge } from "./ui/badge";
-import { formatDate, formatGen, STATUS_LABELS, txLink, VERDICT_LABELS } from "@/lib/format";
-import type { Claim } from "@/lib/contracts/LicenseHunter";
+import Link from "next/link";
+
+import type { Claim, ClaimStatus } from "@/lib/contracts/LicenseHunter";
+import { formatDate, formatGen, pageLabel, STATUS_LABELS, VERDICT_LABELS } from "@/lib/format";
+
+export const STATUS_CHIPS: Record<ClaimStatus, string> = {
+  NOTICE_ISSUED: "chip-signal",
+  DISPUTE_REJECTED: "chip-signal",
+  PAID: "chip-mint",
+  WITHDRAWN: "",
+  NO_NOTICE: "",
+};
 
 export default function ClaimsTable({ claims }: { claims: Claim[] }) {
   if (claims.length === 0) {
-    return <p className="text-sm text-muted-foreground">No claims yet. Run a scan to look for copies.</p>;
+    return <p className="px-4 py-6 text-sm text-muted-foreground">No claims yet. Run a scan to look for copies.</p>;
   }
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="border-b border-border">
+      <table className="t-table min-w-[40rem]">
+        <thead>
           <tr>
-            <th className="text-left px-2 py-2">Found on</th>
-            <th className="text-left px-2 py-2">Verdict</th>
-            <th className="text-left px-2 py-2">Fee</th>
-            <th className="text-left px-2 py-2">Status</th>
-            <th className="text-left px-2 py-2">Filed</th>
-            <th className="text-left px-2 py-2">Action</th>
+            <th>Found on</th>
+            <th>Verdict</th>
+            <th>Fee</th>
+            <th>Status</th>
+            <th>Filed</th>
+            <th>
+              <span className="sr-only">Action</span>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {claims.map((claim) => (
-            <tr key={claim.id} className="border-b border-border hover:bg-muted/50">
-              <td className="px-2 py-2">
-                <a href={claim.pageUrl} target="_blank" rel="noreferrer" className="underline">
-                  {new URL(claim.pageUrl).hostname}
+          {[...claims].reverse().map((claim) => (
+            <tr key={claim.id}>
+              <td className="max-w-[16rem]">
+                <a href={claim.pageUrl} target="_blank" rel="noreferrer" className="t-link block truncate">
+                  {pageLabel(claim.pageUrl)}
                 </a>
               </td>
-              <td className="px-2 py-2">{VERDICT_LABELS[claim.verdict]}</td>
-              <td className="px-2 py-2">{claim.fee === 0n ? "—" : formatGen(claim.fee)}</td>
-              <td className="px-2 py-2">
-                <Badge variant="secondary">{STATUS_LABELS[claim.status]}</Badge>
+              <td>{VERDICT_LABELS[claim.verdict]}</td>
+              <td className="whitespace-nowrap">{claim.fee === 0n ? "—" : formatGen(claim.fee)}</td>
+              <td>
+                <span className={`chip ${STATUS_CHIPS[claim.status]}`}>{STATUS_LABELS[claim.status]}</span>
               </td>
-              <td className="px-2 py-2">{formatDate(claim.createdAt)}</td>
-              <td className="px-2 py-2">
-                <a href={`/notices/${claim.id}`} className="underline">
+              <td className="whitespace-nowrap text-muted-foreground">{formatDate(claim.createdAt)}</td>
+              <td className="text-right">
+                <Link href={`/notices/${claim.id}`} className="t-link uppercase tracking-[0.12em] text-xs">
                   Open
-                </a>
+                </Link>
               </td>
             </tr>
           ))}

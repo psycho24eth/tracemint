@@ -101,68 +101,78 @@ export default function RegisterWorkForm() {
   const args = [title, imageUrl, portfolioUrl, basePriceWei, terms, watchUrls];
 
   return (
-    <div className="glass space-y-4">
-      <h2 className="text-xl font-bold">Register a work</h2>
-
-      {actingAddress && (
-        <p className="text-sm text-muted-foreground">
-          Put this address on your portfolio page so the ownership check passes: <code className="font-mono">{actingAddress}</code>
-        </p>
-      )}
-
-      <div>
-        <Label htmlFor="title">Title</Label>
-        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Work title" />
+    <section className="panel" aria-labelledby="register-work-heading">
+      <div className="panel-head">
+        <h2 id="register-work-heading" className="t-label text-foreground">
+          Register a work
+        </h2>
+        <span className="t-label">Ownership checked by validators</span>
       </div>
 
-      <div>
-        <Label htmlFor="imageUrl">Image URL</Label>
-        <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
-      </div>
+      <div className="space-y-5 p-5">
+        {actingAddress && (
+          <p className="text-sm text-muted-foreground">
+            Put this address on your portfolio page so the ownership check passes:{" "}
+            <code className="break-all text-foreground">{actingAddress}</code>
+          </p>
+        )}
 
-      <div>
-        <Label htmlFor="portfolioUrl">Portfolio URL</Label>
-        <Input id="portfolioUrl" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} placeholder="https://..." />
-      </div>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Work title" />
+          </div>
 
-      <div>
-        <Label htmlFor="basePrice">Base price (GEN)</Label>
-        <Input id="basePrice" value={basePriceText} onChange={(e) => setBasePriceText(e.target.value)} placeholder="10" />
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="basePrice">Base price (GEN)</Label>
+            <Input id="basePrice" value={basePriceText} onChange={(e) => setBasePriceText(e.target.value)} placeholder="10" />
+          </div>
 
-      <div>
-        <Label htmlFor="terms">Terms</Label>
-        <textarea
-          id="terms"
-          value={terms}
-          onChange={(e) => setTerms(e.target.value)}
-          placeholder="License terms"
-          className="w-full rounded border border-input bg-background px-3 py-2"
-          rows={2}
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Image URL</Label>
+            <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="portfolioUrl">Portfolio URL</Label>
+            <Input id="portfolioUrl" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} placeholder="https://..." />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="terms">Terms</Label>
+            <textarea
+              id="terms"
+              value={terms}
+              onChange={(e) => setTerms(e.target.value)}
+              placeholder="License terms"
+              className="t-field"
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="watchUrls">Watched URLs (one per line)</Label>
+            <textarea
+              id="watchUrls"
+              value={watchUrlsText}
+              onChange={(e) => setWatchUrlsText(e.target.value)}
+              placeholder="https://example.com&#10;https://another.com"
+              className="t-field"
+              rows={3}
+            />
+          </div>
+        </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
+        <WriteAction
+          method="register_work"
+          args={args}
+          label="Register work"
+          onBeforeSubmit={handleBeforeSubmit}
+          onSuccess={handleSuccess}
         />
       </div>
-
-      <div>
-        <Label htmlFor="watchUrls">Watched URLs (one per line)</Label>
-        <textarea
-          id="watchUrls"
-          value={watchUrlsText}
-          onChange={(e) => setWatchUrlsText(e.target.value)}
-          placeholder="https://example.com&#10;https://another.com"
-          className="w-full rounded border border-input bg-background px-3 py-2"
-          rows={3}
-        />
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
-      <WriteAction
-        method="register_work"
-        args={args}
-        label="Register work"
-        onBeforeSubmit={handleBeforeSubmit}
-        onSuccess={handleSuccess}
-      />
-    </div>
+    </section>
   );
 }

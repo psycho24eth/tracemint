@@ -30,7 +30,7 @@ export type WriteActionProps = {
   /** Runs first when the button is pressed; return false to stop, for example when a form is invalid. */
   onBeforeSubmit?: () => boolean;
   onSuccess?: () => void;
-  variant?: "default" | "gradient" | "outline" | "secondary";
+  variant?: "default" | "outline" | "secondary";
 };
 
 // The Transaction Kit submits fees without message allocations, and Studio Next rejects payout messages
@@ -63,7 +63,7 @@ function blockedReason(options: {
 function TxLink({ hash }: { hash?: string }) {
   if (!hash) return null;
   return (
-    <a href={txLink(hash)} target="_blank" rel="noreferrer" className="underline">
+    <a href={txLink(hash)} target="_blank" rel="noreferrer" className="t-link">
       View transaction
     </a>
   );
@@ -77,7 +77,7 @@ export function WriteAction({
   disabled,
   onBeforeSubmit,
   onSuccess,
-  variant = "gradient",
+  variant = "default",
 }: WriteActionProps) {
   const { role, accessCode } = useDemoMode();
   const { address } = useWallet();
@@ -171,7 +171,7 @@ export function WriteAction({
         </p>
       )}
       {phase.name === "done" && (
-        <p role="status" className="text-xs text-emerald-400">
+        <p role="status" className="text-xs text-mint">
           Done. <TxLink hash={phase.hash} />
         </p>
       )}

@@ -1,3 +1,4 @@
+import { DEMO_COLLECTION, watchPaths } from "../frontend/lib/demo/catalog";
 import {
   addressLink,
   clientFor,
@@ -20,35 +21,41 @@ const creator = clientFor(requireEnv("DEMO_CREATOR_PRIVATE_KEY") as Hex);
 const address = requireEnv("LICENSE_HUNTER_ADDRESS");
 const portfolioUrl = `${site}/demo/portfolio`;
 
-const works = (await read(creator, address, "list_works")) as Array<Record<string, unknown>>;
-const existing = works.find((work) => work.portfolio_url === portfolioUrl);
-if (existing) {
-  console.log(`demo work already registered: id ${existing.id}`);
-  process.exit(0);
-}
+// Works are matched by image URL, so re-running only registers what is missing.
+const existing = (await read(creator, address, "list_works")) as Array<Record<string, unknown>>;
+const registered = new Map(existing.map((work) => [String(work.image_url), work.id]));
 
-// The ownership check makes validators fetch the portfolio page, so this needs the heavy preset.
-const result = await write(
-  creator,
-  address,
-  "register_work",
-  [
-    "Cybernetic Horizon",
-    `${site}/demo/cybernetic-horizon.png`,
-    portfolioUrl,
-    10n * GEN,
-    "Non-exclusive web license, 12 months",
-    [`${site}/demo/shop`, `${site}/demo/blog`],
-  ],
-  { fees: HEAVY_FEES },
-);
-console.log(`register_work: ${describeTx(result.tx)} ${txLink(result.hash)}`);
-if (!result.ok) {
-  console.error(json(result.tx));
-  process.exit(1);
+let failed = false;
+for (const work of DEMO_COLLECTION) {
+  const imageUrl = `${site}${work.original}`;
+  if (registered.has(imageUrl)) {
+    console.log(`${work.title}: already registered as work ${registered.get(imageUrl)}`);
+    continue;
+  }
+
+  // The ownership check makes validators fetch the portfolio page, so this needs the heavy preset.
+  const result = await write(
+    creator,
+    address,
+    "register_work",
+    [
+      work.title,
+      imageUrl,
+      portfolioUrl,
+      BigInt(work.basePriceGen) * GEN,
+      work.terms,
+      watchPaths(work).map((page) => `${site}${page}`),
+    ],
+    { fees: HEAVY_FEES },
+  );
+  console.log(`${work.title}: register_work ${describeTx(result.tx)} ${txLink(result.hash)}`);
+  if (!result.ok) {
+    console.error(json(result.tx));
+    failed = true;
+  }
 }
 
 const after = (await read(creator, address, "list_works")) as Array<Record<string, unknown>>;
-const work = after.find((item) => item.portfolio_url === portfolioUrl);
-console.log(`demo work id: ${work?.id ?? "unknown"}`);
+console.log(`registered works: ${after.map((work) => `${work.id} ${work.title}`).join(", ")}`);
 console.log(`contract: ${addressLink(address)}`);
+if (failed) process.exit(1);

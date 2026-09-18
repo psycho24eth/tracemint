@@ -106,7 +106,7 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
 
   if (state === "success") {
     return (
-      <div className="glass space-y-3">
+      <div className="space-y-3">
         <p className="font-semibold">
           Checked {candidates} candidate image{candidates !== 1 ? "s" : ""} and filed {filed.length} claim{filed.length !== 1 ? "s" : ""}
         </p>
@@ -118,11 +118,11 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
                 const outcome = outcomes[claim.hash];
                 return (
                   <li key={claim.hash} className="text-sm">
-                    <a href={claim.pageUrl} target="_blank" rel="noreferrer" className="underline">
+                    <a href={claim.pageUrl} target="_blank" rel="noreferrer" className="t-link">
                       {claim.pageUrl}
                     </a>
                     {" - "}
-                    <a href={txLink(claim.hash)} target="_blank" rel="noreferrer" className="underline">
+                    <a href={txLink(claim.hash)} target="_blank" rel="noreferrer" className="t-link">
                       View transaction
                     </a>
                     <p className={outcome?.problem ? "text-destructive" : "text-muted-foreground"}>
@@ -152,7 +152,7 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
 
   if (state === "error") {
     return (
-      <div className="glass space-y-3">
+      <div className="space-y-3">
         <p role="alert" className="text-sm text-destructive">
           {errorMessage}
         </p>

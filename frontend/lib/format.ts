@@ -91,6 +91,20 @@ export function formatDate(seconds: number): string {
   return `${new Date(seconds * 1000).toISOString().replace("T", " ").slice(0, 16)} UTC`;
 }
 
+export function formatMonth(seconds: number): string {
+  return new Date(seconds * 1000).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+}
+
+/** "host/path" for display, without the query string the demo scans add. */
+export function pageLabel(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.hostname}${parsed.pathname === "/" ? "" : parsed.pathname}`;
+  } catch {
+    return url;
+  }
+}
+
 export function siteUrl(path = ""): string {
   const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
   return `${base}${path}`;

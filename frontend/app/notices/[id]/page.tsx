@@ -1,9 +1,10 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useClaim, useWork, useLicenseForClaim } from "@/lib/hooks/useLicenseHunter";
-import { PageShell } from "@/components/PageShell";
+
 import { NoticeView } from "@/components/NoticeView";
+import { PageShell } from "@/components/PageShell";
+import { useClaim, useLicenseForClaim, useWork } from "@/lib/hooks/useLicenseHunter";
 
 export default function NoticePage() {
   const params = useParams();
@@ -16,7 +17,7 @@ export default function NoticePage() {
   if (claimQuery.isLoading || workQuery.isLoading) {
     return (
       <PageShell>
-        <p className="text-muted-foreground">Loading notice…</p>
+        <p className="t-label">Loading notice #{id}…</p>
       </PageShell>
     );
   }

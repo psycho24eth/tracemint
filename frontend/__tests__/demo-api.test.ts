@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   clientFor: vi.fn((privateKey: string) => ({ privateKey })),
@@ -169,6 +169,12 @@ describe("POST /api/demo/write", () => {
 });
 
 describe("GET /api/tx/[hash]", () => {
+  // The route's first import (it pulls in genlayer-js) is slow while the whole suite runs in parallel;
+  // pay it once here rather than inside the first test's 5 s timeout.
+  beforeAll(async () => {
+    await import("../app/api/tx/[hash]/route");
+  }, 30_000);
+
   const get = async (hash: string) => {
     const { GET } = await import("../app/api/tx/[hash]/route");
     return GET(new Request(`http://localhost/api/tx/${hash}`), { params: Promise.resolve({ hash }) });

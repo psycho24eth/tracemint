@@ -22,6 +22,7 @@ export function DisputeForm({ claim }: { claim: Claim }) {
 
   return (
     <div className="space-y-4">
+      <p className="t-label text-foreground">Dispute this notice</p>
       <div className="space-y-2">
         <Label htmlFor="proof-url">Proof URL</Label>
         <Input

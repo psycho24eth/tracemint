@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { User, LogOut, AlertCircle, ExternalLink } from "lucide-react";
+import { AlertCircle, ExternalLink, LogOut, User } from "lucide-react";
 import { useWallet } from "@/lib/genlayer/wallet";
-import { success, error, userRejected } from "@/lib/utils/toast";
+import { error, userRejected } from "@/lib/utils/toast";
 import { AddressDisplay } from "./AddressDisplay";
 import { Button } from "./ui/button";
 import {
@@ -94,77 +94,59 @@ export function AccountPanel() {
     return (
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogTrigger asChild>
-          <Button variant="gradient" disabled={isLoading}>
-            <User className="w-4 h-4 mr-2" />
-            Connect Wallet
+          <Button size="sm" disabled={isLoading}>
+            <User />
+            Connect wallet
           </Button>
         </DialogTrigger>
-        <DialogContent className="brand-card border-2">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
-              Connect to GenLayer
-            </DialogTitle>
-            <DialogDescription>
-              Connect MetaMask to pay licenses, file claims, and withdraw earnings
-            </DialogDescription>
+            <p className="t-label">Wallet</p>
+            <DialogTitle className="display-wide text-2xl">Connect to GenLayer</DialogTitle>
+            <DialogDescription>Connect MetaMask to pay licenses, file claims, and withdraw earnings.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 mt-4">
+          <div className="mt-4 space-y-4">
             {!isMetaMaskInstalled ? (
               <>
-                <Alert variant="default" className="bg-accent/10 border-accent/20">
+                <Alert>
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>MetaMask Not Detected</AlertTitle>
+                  <AlertTitle>MetaMask not detected</AlertTitle>
                   <AlertDescription>
-                    Please install MetaMask to continue. MetaMask is a crypto
-                    wallet that allows you to interact with blockchain applications.
+                    Install MetaMask to continue. It is a browser wallet that lets you sign GenLayer transactions.
                   </AlertDescription>
                 </Alert>
 
-                <Button
-                  onClick={() => window.open(METAMASK_INSTALL_URL, "_blank")}
-                  variant="gradient"
-                  className="w-full h-14 text-lg"
-                >
-                  <ExternalLink className="w-5 h-5 mr-2" />
+                <Button onClick={() => window.open(METAMASK_INSTALL_URL, "_blank")} size="lg" className="w-full">
+                  <ExternalLink />
                   Install MetaMask
                 </Button>
 
-                <div className="p-4 rounded-lg bg-muted/10 border border-muted/20">
-                  <p className="text-xs text-muted-foreground">
-                    After installing MetaMask, refresh this page and click
-                    &quot;Connect Wallet&quot; again.
-                  </p>
-                </div>
+                <p className="border border-line p-4 text-xs text-muted-foreground">
+                  After installing MetaMask, refresh this page and connect again.
+                </p>
               </>
             ) : (
               <>
-                <Button
-                  onClick={handleConnect}
-                  variant="gradient"
-                  className="w-full h-14 text-lg"
-                  disabled={isConnecting}
-                >
-                  <User className="w-5 h-5 mr-2" />
-                  {isConnecting ? "Connecting..." : "Connect MetaMask"}
+                <Button onClick={handleConnect} size="lg" className="w-full" disabled={isConnecting}>
+                  <User />
+                  {isConnecting ? "Connecting…" : "Connect MetaMask"}
                 </Button>
 
                 {connectionError && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Connection Error</AlertTitle>
+                    <AlertTitle>Connection error</AlertTitle>
                     <AlertDescription>{connectionError}</AlertDescription>
                   </Alert>
                 )}
 
-                <div className="p-4 rounded-lg bg-muted/10 border border-muted/20">
-                  <p className="text-xs text-muted-foreground">
-                    This will open MetaMask and prompt you to:
-                  </p>
-                  <ol className="text-xs text-muted-foreground list-decimal list-inside mt-2 space-y-1">
-                    <li>Connect your wallet to this application</li>
-                    <li>Add the GenLayer network to MetaMask</li>
-                    <li>Switch to the GenLayer network</li>
+                <div className="border border-line p-4 text-xs text-muted-foreground">
+                  <p>MetaMask will ask you to:</p>
+                  <ol className="mt-2 list-inside list-decimal space-y-1">
+                    <li>Connect your wallet to this site</li>
+                    <li>Add the GenLayer Studio Next network</li>
+                    <li>Switch to that network</li>
                   </ol>
                 </div>
               </>
@@ -178,63 +160,43 @@ export function AccountPanel() {
   // Connected state
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <div className="flex items-center gap-4">
-        <div className="brand-card px-4 py-2 flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-accent" />
-            <AddressDisplay address={address} maxLength={12} />
-          </div>
-        </div>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-2 border border-line px-3 py-1.5 text-xs transition-colors hover:border-signal"
+          aria-label="Wallet details"
+        >
+          <span className={`h-2 w-2 rounded-full ${isOnCorrectNetwork ? "bg-mint" : "bg-signal"}`} aria-hidden="true" />
+          <AddressDisplay address={address} maxLength={12} />
+        </button>
+      </DialogTrigger>
 
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <User className="w-4 h-4" />
-          </Button>
-        </DialogTrigger>
-      </div>
-
-      <DialogContent className="brand-card border-2">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            Wallet Details
-          </DialogTitle>
-          <DialogDescription>
-            Your connected MetaMask wallet information
-          </DialogDescription>
+          <p className="t-label">Wallet</p>
+          <DialogTitle className="display-wide text-2xl">Wallet details</DialogTitle>
+          <DialogDescription>Your connected MetaMask wallet.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
-          <div className="brand-card p-4 space-y-2">
-            <p className="text-sm text-muted-foreground">Your Address</p>
-            <code className="text-sm font-mono break-all">{address}</code>
+        <div className="mt-4 space-y-4">
+          <div className="space-y-2 border border-line p-4">
+            <p className="t-label">Address</p>
+            <code className="break-all text-sm">{address}</code>
           </div>
 
-          <div className="brand-card p-4 space-y-2">
-            <p className="text-sm text-muted-foreground">Network Status</p>
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  isOnCorrectNetwork
-                    ? "bg-green-500"
-                    : "bg-yellow-500 animate-pulse"
-                }`}
-              />
-              <span className="text-sm">
-                {isOnCorrectNetwork
-                  ? "Connected to GenLayer"
-                  : "Wrong Network"}
-              </span>
-            </div>
+          <div className="space-y-2 border border-line p-4">
+            <p className="t-label">Network</p>
+            <p className="flex items-center gap-2 text-sm">
+              <span className={`h-2 w-2 rounded-full ${isOnCorrectNetwork ? "bg-mint" : "bg-signal"}`} aria-hidden="true" />
+              {isOnCorrectNetwork ? "Connected to GenLayer Studio Next" : "Wrong network"}
+            </p>
           </div>
 
           {!isOnCorrectNetwork && (
-            <Alert variant="default" className="bg-yellow-500/10 border-yellow-500/20">
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <AlertTitle>Network Warning</AlertTitle>
-              <AlertDescription>
-                You&apos;re not on the GenLayer network. Please switch networks in
-                MetaMask or try reconnecting.
-              </AlertDescription>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Wrong network</AlertTitle>
+              <AlertDescription>Switch to GenLayer Studio Next in MetaMask, or reconnect.</AlertDescription>
             </Alert>
           )}
 
@@ -246,34 +208,21 @@ export function AccountPanel() {
             </Alert>
           )}
 
-          <div className="mt-6 pt-4 border-t border-white/10 space-y-3">
-            <Button
-              onClick={handleSwitchAccount}
-              variant="outline"
-              className="w-full"
-              disabled={isSwitching || isLoading}
-            >
-              <User className="w-4 h-4 mr-2" />
-              {isSwitching ? "Switching..." : "Switch Account"}
+          <div className="space-y-3 border-t border-line pt-4">
+            <Button onClick={handleSwitchAccount} variant="outline" className="w-full" disabled={isSwitching || isLoading}>
+              <User />
+              {isSwitching ? "Switching…" : "Switch account"}
             </Button>
 
             <Button
               onClick={handleDisconnect}
-              className="w-full text-destructive hover:text-destructive"
               variant="outline"
+              className="w-full text-destructive hover:border-destructive hover:text-destructive"
               disabled={isSwitching || isLoading}
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              Disconnect Wallet
+              <LogOut />
+              Disconnect wallet
             </Button>
-          </div>
-
-          <div className="p-4 rounded-lg bg-muted/10 border border-muted/20">
-            <p className="text-xs text-muted-foreground">
-              Use &quot;Switch Account&quot; to select a different MetaMask
-              account. Use &quot;Disconnect&quot; to remove this site from
-              MetaMask.
-            </p>
           </div>
         </div>
       </DialogContent>
