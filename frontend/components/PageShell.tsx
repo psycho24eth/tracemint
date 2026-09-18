@@ -5,7 +5,8 @@ import { Navbar } from "./Navbar";
 
 export function PageShell({ children, bleed = false }: { children: ReactNode; bleed?: boolean }) {
   return (
-    <div className="relative flex min-h-screen flex-col">
+    // Card glows spill past the grid; clip them at the page edge without creating a scroll container.
+    <div className="relative flex min-h-screen flex-col overflow-x-clip">
       <div className="page-rules" aria-hidden="true" />
       <div className="page-grain" aria-hidden="true" />
       <Navbar />

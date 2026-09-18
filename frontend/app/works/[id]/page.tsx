@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 
 import ClaimsTable from "@/components/ClaimsTable";
-import { Collectible, TiltCard } from "@/components/cards/Collectible";
+import { CardRow, Collectible, Layer, phaseFor, serial, TiltCard } from "@/components/cards/Collectible";
 import { PageShell } from "@/components/PageShell";
 import ScanNowButton from "@/components/ScanNowButton";
 import { WatchlistEditor } from "@/components/WatchlistEditor";
@@ -29,11 +29,14 @@ export default function WorkDetailPage() {
     <PageShell>
       <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
         <div className="lg:col-span-5">
-          <TiltCard max={8}>
-            <Collectible finish="edge">
-              <div className="p-3">
-                <img src={work.imageUrl} alt={work.title} className="aspect-[3/2] w-full rounded-md bg-black object-contain" />
-              </div>
+          <TiltCard max={10}>
+            <Collectible art={work.imageUrl} idle phase={phaseFor(work.id)}>
+              <Layer z={10}>
+                <CardRow left={`Work Nº ${serial(work.id)}`} right="Registered" />
+              </Layer>
+              <Layer z={26} className="glass-art bg-black">
+                <img src={work.imageUrl} alt={work.title} className="aspect-[3/2] w-full object-contain" />
+              </Layer>
             </Collectible>
           </TiltCard>
         </div>

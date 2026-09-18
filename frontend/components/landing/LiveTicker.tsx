@@ -36,7 +36,8 @@ export function LiveTicker() {
         .map((claim) => describe(claim, works.data ?? []))
     : FALLBACK;
   if (stats.data) {
-    events.push(`${stats.data.works} works registered`, `${stats.data.licenses} licenses minted`);
+    const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+    events.push(`${plural(stats.data.works, "work")} registered`, `${plural(stats.data.licenses, "license")} minted`);
   }
 
   // Rendered twice so the -50% loop joins seamlessly.

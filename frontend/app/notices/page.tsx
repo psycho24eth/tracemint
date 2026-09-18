@@ -8,6 +8,7 @@ import { PageShell } from "@/components/PageShell";
 import { SectionHeading } from "@/components/SectionHeading";
 import type { Claim } from "@/lib/contracts/LicenseHunter";
 import { useNotices, useWorks } from "@/lib/hooks/useLicenseHunter";
+import { latestPerCopy } from "@/lib/notices";
 
 const FILTERS: { id: string; label: string; match: (claim: Claim) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
@@ -23,7 +24,8 @@ export default function NoticesPage() {
 
   const workById = new Map((works.data ?? []).map((work) => [work.id, work]));
   const active = FILTERS.find((item) => item.id === filter) ?? FILTERS[0];
-  const shown = [...(notices ?? [])].reverse().filter(active.match);
+  const copies = latestPerCopy(notices ?? []);
+  const shown = [...copies].reverse().filter(active.match);
 
   return (
     <PageShell>
@@ -33,7 +35,7 @@ export default function NoticesPage() {
 
       <div className="mt-10 flex flex-wrap gap-2" role="radiogroup" aria-label="Filter notices">
         {FILTERS.map((item) => {
-          const count = (notices ?? []).filter(item.match).length;
+          const count = copies.filter(item.match).length;
           return (
             <button
               key={item.id}
@@ -50,6 +52,8 @@ export default function NoticesPage() {
           );
         })}
       </div>
+
+      <p className="mt-3 text-xs text-muted-foreground">Repeat scans of the same page are grouped: each card is the newest notice for that copy.</p>
 
       {error && <p className="mt-8 text-destructive">Error: {error.message}</p>}
 

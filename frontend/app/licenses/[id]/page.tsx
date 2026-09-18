@@ -71,7 +71,7 @@ export default function LicensePage() {
       <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
         <div className="mx-auto w-full max-w-sm lg:col-span-5">
           <TiltCard max={16}>
-            <LicenseFace license={data} work={work.data} />
+            <LicenseFace license={data} work={work.data} idle />
           </TiltCard>
           <p className="t-label mt-4 text-center">Move your cursor over the license</p>
         </div>

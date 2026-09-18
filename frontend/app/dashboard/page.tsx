@@ -10,6 +10,7 @@ import { formatGen, STATUS_LABELS } from "@/lib/format";
 import { useActingAddress } from "@/lib/demo/DemoModeProvider";
 import { useEarnings, useLicensesFor, useWorks } from "@/lib/hooks/useLicenseHunter";
 import { useCreatorLedger } from "@/lib/hooks/useCreatorLedger";
+import { latestPerCopy } from "@/lib/notices";
 
 export default function DashboardPage() {
   const actingAddress = useActingAddress();
@@ -31,7 +32,7 @@ export default function DashboardPage() {
   const withdrawableAmount = withdrawable.data ?? 0n;
   const ledgerData = ledger.data;
   const workById = new Map((works.data ?? ledgerData?.works ?? []).map((work) => [work.id, work]));
-  const openNotices = (ledgerData?.claims ?? []).filter((claim) => claim.status === "NOTICE_ISSUED");
+  const openNotices = latestPerCopy((ledgerData?.claims ?? []).filter((claim) => claim.status === "NOTICE_ISSUED"));
   const ownedLicenses = [...(licenses.data ?? [])].reverse();
 
   return (

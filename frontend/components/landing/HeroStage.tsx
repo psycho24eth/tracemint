@@ -8,16 +8,17 @@ import { NoticeCard } from "@/components/cards/NoticeCard";
 import { WorkCard } from "@/components/cards/WorkCard";
 import { useLatestLicenses, useNotices, useWorks } from "@/lib/hooks/useLicenseHunter";
 
-// Where each card sits in the fanned 3D layout, as percentages of the stage.
+// Where each card sits in the fanned layout, as percentages of the stage, and how it is turned.
+// The cards apply the turn themselves (--base-ry, --base-rz), so their glass layers keep their depth.
 const FAN = [
-  { left: "0%", top: "15%", transform: "rotateY(24deg) rotateZ(-5deg)", label: { left: "1%", top: "7%" } },
-  { left: "33%", top: "6%", transform: "rotateY(6deg) rotateZ(-1deg)", label: { left: "34%", top: "-2%" } },
-  { left: "66%", top: "17%", transform: "rotateY(-18deg) rotateZ(5deg)", label: { left: "67%", top: "9%" } },
+  { left: "0%", top: "15%", ry: "24deg", rz: "-5deg", label: { left: "1%", top: "7%" } },
+  { left: "33%", top: "6%", ry: "6deg", rz: "-1deg", label: { left: "34%", top: "-2%" } },
+  { left: "66%", top: "17%", ry: "-18deg", rz: "5deg", label: { left: "67%", top: "9%" } },
 ];
 
 /**
- * The hero's "Trace. Judge. Mint." as three live cards: the first registered work, the newest
- * open notice, and the newest license, fanned out in 3D on wide screens and swipeable on phones.
+ * The hero's "Trace. Judge. Mint." as three live cards: a registered work, the newest open notice,
+ * and the newest license, fanned out in 3D on wide screens and swipeable on phones.
  */
 export function HeroStage() {
   const works = useWorks();
@@ -25,27 +26,29 @@ export function HeroStage() {
   const licenses = useLatestLicenses(1);
 
   const workById = new Map((works.data ?? []).map((work) => [work.id, work]));
-  const work = works.data?.[0];
   const notice = (notices.data ?? []).filter((claim) => claim.status === "NOTICE_ISSUED").at(-1) ?? notices.data?.at(-1);
   const license = licenses.data?.[0];
+  // Feature a work the other two cards don't show, so the three faces differ.
+  const featured = new Set([notice?.workId, license?.workId]);
+  const work = (works.data ?? []).find((candidate) => !featured.has(candidate.id)) ?? works.data?.[0];
 
   const steps: { index: string; label: string; card: ReactNode }[] = [
-    { index: "01", label: "Trace", card: work ? <WorkCard work={work} tilt={false} /> : <CardSkeleton label="Registered work" /> },
+    { index: "01", label: "Trace", card: work ? <WorkCard work={work} /> : <CardSkeleton label="Registered work" /> },
     {
       index: "02",
       label: "Judge",
-      card: notice ? <NoticeCard claim={notice} work={workById.get(notice.workId)} tilt={false} /> : <CardSkeleton label="Notice" />,
+      card: notice ? <NoticeCard claim={notice} work={workById.get(notice.workId)} /> : <CardSkeleton label="Notice" />,
     },
     {
       index: "03",
       label: "Mint",
-      card: license ? <LicenseCard license={license} work={workById.get(license.workId)} tilt={false} /> : <CardSkeleton label="License" />,
+      card: license ? <LicenseCard license={license} work={workById.get(license.workId)} /> : <CardSkeleton label="License" />,
     },
   ];
 
   return (
     <>
-      <div className="relative hidden aspect-[1.3/1] [perspective:1600px] lg:block">
+      <div className="relative hidden aspect-[1.3/1] lg:block">
         <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <polyline
             points="9,9 42,1 75,11"
@@ -68,8 +71,9 @@ export function HeroStage() {
                 {
                   left: FAN[index].left,
                   top: FAN[index].top,
-                  transform: FAN[index].transform,
                   zIndex: index + 1,
+                  "--base-ry": FAN[index].ry,
+                  "--base-rz": FAN[index].rz,
                   "--delay": `${index * -2300}ms`,
                 } as CSSProperties
               }
@@ -80,14 +84,15 @@ export function HeroStage() {
         ))}
       </div>
 
-      <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 lg:hidden">
+      {/* The vertical padding leaves room for the cards' glow inside the scroller. */}
+      <div className="-mx-4 -my-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 py-6 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
         {steps.map((step) => (
-          <div key={step.index} className="w-[72%] max-w-xs shrink-0 snap-center">
+          <div key={step.index} className="flex w-[72%] max-w-xs shrink-0 snap-center flex-col">
             <p className="t-label mb-2 text-foreground">
               <span className="t-index mr-2">{step.index}</span>
               {step.label}
             </p>
-            {step.card}
+            <div className="flex-1">{step.card}</div>
           </div>
         ))}
       </div>
