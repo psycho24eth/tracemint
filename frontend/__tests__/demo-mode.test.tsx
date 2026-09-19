@@ -88,7 +88,7 @@ describe("judge mode", () => {
 
     expect(await screen.findByRole("radio", { name: "Demo site owner" })).toHaveAttribute("aria-checked", "true");
 
-    fireEvent.click(screen.getByRole("button", { name: "Exit judge mode" }));
+    fireEvent.click(screen.getByRole("button", { name: "Exit demo mode" }));
     expect(screen.queryByRole("radiogroup", { name: "Act as" })).not.toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("0x000000000000000000000000000000000000a11e");
     expect(window.localStorage.getItem("tracemint.judgeAccess")).toBeNull();

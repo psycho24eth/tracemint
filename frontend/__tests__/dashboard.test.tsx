@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,6 +8,13 @@ const state = vi.hoisted(() => ({
   actingAddress: "0x1234567890123456789012345678901234567890" as string | null,
   writeActionProps: null as any,
   zeroEarnings: false,
+  openModal: vi.fn(),
+}));
+
+vi.mock("@/lib/genlayer/wallet", () => ({ useWallet: () => ({ openModal: state.openModal }) }));
+
+vi.mock("@/components/demo/DemoAccessPanel", () => ({
+  DemoAccessPanel: () => <section aria-label="Demo access" />,
 }));
 
 vi.mock("@/components/PageShell", () => ({
@@ -54,6 +61,7 @@ beforeEach(() => {
   state.actingAddress = "0x1234567890123456789012345678901234567890";
   state.writeActionProps = null;
   state.zeroEarnings = false;
+  state.openModal.mockClear();
 });
 
 afterEach(() => {
@@ -81,9 +89,12 @@ describe("Dashboard", () => {
     expect(state.writeActionProps.disabled).toBe(true);
   });
 
-  it("shows the connect message when there is no acting address", () => {
+  it("offers a wallet or a demo code when there is no acting address", () => {
     state.actingAddress = null;
     render(<DashboardPage />);
-    expect(screen.getByText(/Connect a wallet or pick a demo role to see earnings/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Connect wallet" }));
+    expect(state.openModal).toHaveBeenCalledWith("connect");
+    expect(screen.getByRole("region", { name: "Demo access" })).toBeInTheDocument();
   });
 });

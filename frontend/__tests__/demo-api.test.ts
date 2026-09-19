@@ -80,7 +80,54 @@ describe("POST /api/demo/access", () => {
   });
 });
 
+describe("POST /api/demo/code", () => {
+  async function codeRoute() {
+    vi.resetModules();
+    return import("../app/api/demo/code/route");
+  }
+
+  it("hands out a unique code that unlocks demo mode", async () => {
+    const { POST: issue } = await codeRoute();
+    const first = (await (await issue()).json()) as { code: string; expiresAt: number };
+    const second = (await (await issue()).json()) as { code: string };
+
+    expect(first.code).toMatch(/^DEMO-/);
+    expect(second.code).not.toBe(first.code);
+    expect(first.expiresAt).toBeGreaterThan(Date.now());
+
+    const { POST: unlock } = await accessRoute();
+    expect((await unlock(unlockRequest(first.code))).status).toBe(204);
+  });
+
+  it("hands out nothing when demo mode is switched off", async () => {
+    vi.stubEnv("DEMO_ACCESS_CODE", "");
+    const { POST: issue } = await codeRoute();
+
+    expect((await issue()).status).toBe(503);
+  });
+
+  it("tells the visitor when their demo code has expired", async () => {
+    const { issueDemoCode } = await import("../lib/server/demo-codes");
+    const stale = issueDemoCode(ACCESS_CODE, Date.now() - 25 * 3_600_000).code;
+    const { POST: unlock } = await accessRoute();
+
+    const response = await unlock(unlockRequest(stale));
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ error: "That demo code has expired. Get a new one." });
+  });
+});
+
 describe("POST /api/demo/write", () => {
+  it("signs for a generated demo code too", async () => {
+    const { issueDemoCode } = await import("../lib/server/demo-codes");
+    const { POST } = await writeRoute();
+
+    const response = await POST(post({ role: "creator", method: "withdraw_earnings", args: [] }, issueDemoCode(ACCESS_CODE).code));
+
+    expect(response.status).toBe(200);
+  });
+
   it("requires the judge access code", async () => {
     const { POST } = await writeRoute();
 

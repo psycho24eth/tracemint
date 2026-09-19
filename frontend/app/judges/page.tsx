@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { CheckCircle2, ExternalLink } from "lucide-react";
 
+import { DemoAccessPanel } from "@/components/demo/DemoAccessPanel";
 import { PageShell } from "@/components/PageShell";
 import { DEMO_ROLE_LABELS, demoAddress } from "@/lib/demo/roles";
 import { useDemoMode } from "@/lib/demo/DemoModeProvider";
@@ -102,7 +103,7 @@ function AccessForm() {
   return (
     <form
       onSubmit={submit}
-      className="panel flex max-w-xl flex-wrap items-end gap-4 p-5"
+      className="panel flex flex-wrap items-end gap-4 p-5"
     >
       <label className="flex min-w-0 flex-1 flex-col gap-2">
         <span className="t-label text-foreground/80">Judge access code</span>
@@ -150,12 +151,15 @@ export default function JudgesPage() {
           Verify TraceMint in five minutes
         </h1>
         <p className="max-w-2xl text-muted-foreground">
-          No wallet needed. Enter the access code from the submission to unlock
-          two funded demo roles, then follow the steps. Every action is a real
-          transaction on GenLayer Studio Next.
+          No wallet needed. Enter the access code from the submission, or get
+          a fresh demo code, to unlock two funded demo roles, then follow the
+          steps. Every action is a real transaction on GenLayer Studio Next.
         </p>
         {!accessCode ? (
-          <AccessForm />
+          <div className="grid max-w-4xl items-start gap-4 md:grid-cols-2">
+            <AccessForm />
+            <DemoAccessPanel className="bg-background/60" />
+          </div>
         ) : (
           <div className="flex flex-wrap items-center gap-2">
             {(["creator", "site-owner"] as const).map((demoRole) => (
@@ -178,7 +182,7 @@ export default function JudgesPage() {
               onClick={exit}
               className="px-3 py-2 text-xs uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground"
             >
-              Exit judge mode
+              Exit demo mode
             </button>
           </div>
         )}
@@ -186,9 +190,9 @@ export default function JudgesPage() {
 
       <div className="grid gap-10 lg:grid-cols-[1fr_340px]">
         <ol className="border-t border-line">
-          <Step index={1} title="Unlock judge mode">
-            Enter the access code above, then act as{" "}
-            <RoleLink role="creator">Demo creator</RoleLink>. The judge bar
+          <Step index={1} title="Unlock demo mode">
+            Enter the access code above or get a demo code, then act as{" "}
+            <RoleLink role="creator">Demo creator</RoleLink>. The demo bar
             under the menu shows the active role.
           </Step>
           <Step

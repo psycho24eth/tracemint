@@ -1,19 +1,25 @@
 "use client";
 
+import { Wallet } from "lucide-react";
+
 import { LicenseCard } from "@/components/cards/LicenseCard";
 import { NoticeCard } from "@/components/cards/NoticeCard";
 import { WorkCard } from "@/components/cards/WorkCard";
+import { DemoAccessPanel } from "@/components/demo/DemoAccessPanel";
 import { PageShell } from "@/components/PageShell";
 import { SectionHeading } from "@/components/SectionHeading";
+import { Button } from "@/components/ui/button";
 import { WriteAction } from "@/components/WriteAction";
 import { formatGen, STATUS_LABELS } from "@/lib/format";
 import { useActingAddress } from "@/lib/demo/DemoModeProvider";
+import { useWallet } from "@/lib/genlayer/wallet";
 import { useEarnings, useLicensesFor, useWorks } from "@/lib/hooks/useLicenseHunter";
 import { useCreatorLedger } from "@/lib/hooks/useCreatorLedger";
 import { latestPerCopy } from "@/lib/notices";
 
 export default function DashboardPage() {
   const actingAddress = useActingAddress();
+  const { openModal } = useWallet();
   const withdrawable = useEarnings(actingAddress);
   const ledger = useCreatorLedger(actingAddress);
   const licenses = useLicensesFor(actingAddress);
@@ -23,8 +29,23 @@ export default function DashboardPage() {
     return (
       <PageShell>
         <SectionHeading as="h1" kicker="Your account" title="Dashboard">
-          Connect a wallet or pick a demo role to see earnings. Judges can unlock the demo roles on the Judges page.
+          Your earnings as a creator, the notices addressed to your site, and the licenses you hold, all in one place.
         </SectionHeading>
+        <div className="mt-10 grid max-w-4xl items-start gap-4 md:grid-cols-2">
+          <section aria-labelledby="dashboard-connect" className="panel space-y-3 p-4">
+            <h3 id="dashboard-connect" className="flex items-center gap-2 text-base">
+              <Wallet className="size-4 text-mint" aria-hidden="true" />
+              Connect your wallet
+            </h3>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Use the browser wallet you already have, such as MetaMask or Rabby. TraceMint adds the GenLayer network for you.
+            </p>
+            <Button type="button" className="w-full" onClick={() => openModal("connect")}>
+              Connect wallet
+            </Button>
+          </section>
+          <DemoAccessPanel className="bg-background/60" />
+        </div>
       </PageShell>
     );
   }

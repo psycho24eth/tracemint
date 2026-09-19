@@ -14,7 +14,7 @@ export function JudgeModeBar() {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-xs md:px-6">
         <span className="flex items-center gap-2 font-bold uppercase tracking-[0.16em] text-signal">
           <span className="live-dot" aria-hidden="true" />
-          Judge mode
+          Demo mode
         </span>
         <span className="t-label">Acting as</span>
         <div role="radiogroup" aria-label="Act as" className="flex border border-line">
@@ -38,7 +38,7 @@ export function JudgeModeBar() {
           onClick={exit}
           className="ml-auto uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-foreground"
         >
-          Exit judge mode
+          Exit demo mode
         </button>
       </div>
     </div>

@@ -4,11 +4,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   role: null as null | "creator" | "site-owner",
   address: null as string | null,
+  onGenLayer: true,
+  balance: undefined as bigint | undefined,
   refresh: vi.fn(),
+  openModal: vi.fn(),
+  switchNetwork: vi.fn(async () => true),
 }));
 
 vi.mock("@/lib/demo/DemoModeProvider", () => ({ useDemoMode: () => ({ role: state.role, setRole: () => {} }) }));
-vi.mock("@/lib/genlayer/wallet", () => ({ useWallet: () => ({ address: state.address }) }));
+vi.mock("@/lib/genlayer/wallet", () => ({
+  useWallet: () => ({
+    address: state.address,
+    provider: state.address ? { request: vi.fn() } : null,
+    isOnCorrectNetwork: state.onGenLayer,
+    openModal: state.openModal,
+    switchNetwork: state.switchNetwork,
+  }),
+}));
+vi.mock("@/lib/hooks/useGenBalance", () => ({ useGenBalance: () => ({ data: state.balance }) }));
+vi.mock("@/components/wallet/TestGenButton", () => ({ TestGenButton: () => <button type="button">Get test GEN</button> }));
 vi.mock("@/lib/genlayer/kit", async () => {
   const { createMockKit } = await import("@genlayer/transaction-kit-react");
   const kit = createMockKit({ delays: { estimate: 0, submit: 0, step: 0 } });
@@ -39,7 +53,11 @@ const fetchMock = vi.fn(async (url: string, _init?: RequestInit) =>
 beforeEach(() => {
   state.role = null;
   state.address = null;
+  state.onGenLayer = true;
+  state.balance = undefined;
   state.refresh.mockClear();
+  state.openModal.mockClear();
+  state.switchNetwork.mockReset().mockResolvedValue(true);
   fetchMock.mockClear();
   fetchMock.mockImplementation(async (url: string) => (url === "/api/demo/write" ? reply({ hash: HASH }) : decided()));
   vi.stubGlobal("fetch", fetchMock);
@@ -133,11 +151,48 @@ describe("WriteAction in demo mode", () => {
 });
 
 describe("WriteAction in wallet mode", () => {
-  it("asks for a wallet when none is connected", () => {
+  it("opens the wallet picker when no wallet is connected", () => {
     render(<WriteAction method="update_watchlist" args={[1, []]} label="Save watchlist" />);
 
-    expect(screen.getByRole("button", { name: "Save watchlist" })).toBeDisabled();
-    expect(screen.getByText("Connect your wallet to continue.")).toBeInTheDocument();
+    expect(screen.getByText("Connect a wallet to continue.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save watchlist" }));
+
+    expect(state.openModal).toHaveBeenCalledWith("connect");
+  });
+
+  it("switches the wallet to GenLayer before it opens the transaction panel", async () => {
+    state.address = "0x000000000000000000000000000000000000a11e";
+    state.onGenLayer = false;
+    render(<WriteAction method="update_watchlist" args={[1, []]} label="Save watchlist" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save watchlist" }));
+
+    await waitFor(() => expect(document.querySelector("button.gltk-hold")).not.toBeNull());
+    expect(state.switchNetwork).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops when the wallet stays on another network", async () => {
+    state.address = "0x000000000000000000000000000000000000a11e";
+    state.onGenLayer = false;
+    state.switchNetwork.mockResolvedValue(false);
+    render(<WriteAction method="update_watchlist" args={[1, []]} label="Save watchlist" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save watchlist" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your wallet is still on another network.");
+    expect(document.querySelector("button.gltk-hold")).toBeNull();
+  });
+
+  it("shows the balance and offers test GEN beside a payment the wallet can't cover", async () => {
+    state.address = "0x000000000000000000000000000000000000a11e";
+    state.balance = 2n * GEN;
+    render(<WriteAction method="pay_license" args={[7]} value={45n * GEN} label="Pay 45 GEN" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Pay 45 GEN" }));
+
+    expect(await screen.findByText(/not enough to send 45 GEN plus fees/)).toBeInTheDocument();
+    expect(screen.getByText("2 GEN")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Get test GEN" })).toBeInTheDocument();
   });
 
   it("explains that wallet payouts go through the demo creator role", () => {

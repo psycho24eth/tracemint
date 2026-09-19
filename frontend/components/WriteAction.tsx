@@ -4,12 +4,15 @@ import { GenLayerTransactionPanel, type SubmitInput, type TrackedStatus } from "
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { TestGenButton } from "@/components/wallet/TestGenButton";
 import { useDemoMode } from "@/lib/demo/DemoModeProvider";
 import { DEMO_ROLE_LABELS, roleForMethod, type DemoRole } from "@/lib/demo/roles";
-import { txLink } from "@/lib/format";
+import { FAUCET_CEILING_WEI } from "@/lib/faucet";
+import { formatGen, txLink } from "@/lib/format";
 import { GENLAYER_NETWORK, getContractAddress } from "@/lib/genlayer/client";
 import { useTransactionKit } from "@/lib/genlayer/kit";
 import { useWallet } from "@/lib/genlayer/wallet";
+import { useGenBalance } from "@/lib/hooks/useGenBalance";
 import { useRefreshLicenseHunter } from "@/lib/hooks/useLicenseHunter";
 import { outcomeMessage, STILL_WAITING_MESSAGE, submitDemoWrite, UNDECIDED_MESSAGE, waitForDemoTx } from "@/lib/tx";
 
@@ -17,6 +20,7 @@ type Phase =
   | { name: "idle" }
   | { name: "submitting" }
   | { name: "pending"; hash: string }
+  | { name: "switching" }
   | { name: "wallet" }
   | { name: "done"; hash?: string }
   | { name: "failed"; message: string; hash?: string };
@@ -50,14 +54,30 @@ function blockedReason(options: {
     if (options.requiredRole === options.role) return null;
     return options.requiredRole
       ? `Switch to the ${DEMO_ROLE_LABELS[options.requiredRole].toLowerCase()} role to do this.`
-      : "Exit judge mode to use your wallet for this.";
+      : "Exit demo mode to use your wallet for this.";
   }
   if (WALLET_BLOCKED_METHODS.has(options.method)) {
     return "Withdrawing from a connected wallet isn't supported on Studio Next yet: payouts need a message fee allocation that wallet signing can't send.";
   }
-  if (!options.address) return "Connect your wallet to continue.";
-  if (!options.hasKit) return "Your wallet is not ready. Reconnect it and try again.";
+  // No wallet yet is not a dead end: the button opens the wallet picker instead.
+  if (options.address && !options.hasKit) return "Your wallet is not ready. Reconnect it and try again.";
   return null;
+}
+
+/** The wallet's GEN next to the fee quote, with test GEN a click away when it runs low. */
+function WalletFunds({ address, balance, value }: { address: string; balance?: bigint; value?: bigint }) {
+  if (balance === undefined) return null;
+  const short = value !== undefined && balance < value;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border border-line px-3 py-2 text-xs">
+      <p>
+        <span className="t-label mr-2">Wallet balance</span>
+        <span className={short ? "text-signal" : undefined}>{formatGen(balance, 2)}</span>
+        {short && <span className="text-signal"> · not enough to send {formatGen(value, 2)} plus fees</span>}
+      </p>
+      {balance < FAUCET_CEILING_WEI && <TestGenButton address={address} variant={short || balance === 0n ? "default" : "outline"} />}
+    </div>
+  );
 }
 
 function TxLink({ hash }: { hash?: string }) {
@@ -80,8 +100,9 @@ export function WriteAction({
   variant = "default",
 }: WriteActionProps) {
   const { role, accessCode } = useDemoMode();
-  const { address } = useWallet();
-  const kit = useTransactionKit(address);
+  const { address, provider, isOnCorrectNetwork, openModal, switchNetwork } = useWallet();
+  const kit = useTransactionKit(address, provider);
+  const balance = useGenBalance(role ? null : address);
   const refresh = useRefreshLicenseHunter();
   const contractAddress = getContractAddress();
   const [phase, setPhase] = useState<Phase>({ name: "idle" });
@@ -101,7 +122,8 @@ export function WriteAction({
     address,
     hasKit: kit !== null,
   });
-  const busy = phase.name === "submitting" || phase.name === "pending";
+  const busy = phase.name === "submitting" || phase.name === "pending" || phase.name === "switching";
+  const needsWallet = !role && !address;
 
   function succeed(hash?: string) {
     setPhase({ name: "done", hash });
@@ -127,10 +149,24 @@ export function WriteAction({
     }
   }
 
-  function start() {
+  async function start() {
     if (onBeforeSubmit && !onBeforeSubmit()) return;
-    if (role) void runDemoWrite(role);
-    else setPhase({ name: "wallet" });
+    if (role) {
+      void runDemoWrite(role);
+      return;
+    }
+    if (!address) {
+      openModal("connect");
+      return;
+    }
+    if (!isOnCorrectNetwork) {
+      setPhase({ name: "switching" });
+      if (!(await switchNetwork())) {
+        setPhase({ name: "failed", message: `Your wallet is still on another network. Switch to ${GENLAYER_NETWORK.chainName} and try again.` });
+        return;
+      }
+    }
+    setPhase({ name: "wallet" });
   }
 
   function handleWalletDone(status: TrackedStatus) {
@@ -144,8 +180,9 @@ export function WriteAction({
 
   return (
     <div className="space-y-2">
-      {phase.name === "wallet" && kit ? (
+      {phase.name === "wallet" && kit && address ? (
         <div className="space-y-2">
+          <WalletFunds address={address} balance={balance.data} value={value} />
           <GenLayerTransactionPanel
             kit={kit}
             tx={tx}
@@ -160,11 +197,18 @@ export function WriteAction({
           </Button>
         </div>
       ) : (
-        <Button type="button" variant={variant} disabled={Boolean(disabled || reason || busy)} onClick={start}>
-          {phase.name === "submitting" ? "Submitting…" : phase.name === "pending" ? "Waiting for validators…" : label}
+        <Button type="button" variant={variant} disabled={Boolean(disabled || reason || busy)} onClick={() => void start()}>
+          {phase.name === "submitting"
+            ? "Submitting…"
+            : phase.name === "pending"
+              ? "Waiting for validators…"
+              : phase.name === "switching"
+                ? "Switching network…"
+                : label}
         </Button>
       )}
       {reason && <p className="text-xs text-muted-foreground">{reason}</p>}
+      {!reason && needsWallet && <p className="text-xs text-muted-foreground">Connect a wallet to continue.</p>}
       {phase.name === "pending" && (
         <p role="status" className="text-xs text-muted-foreground">
           Submitted. Validators usually decide within 1–2 minutes. <TxLink hash={phase.hash} />

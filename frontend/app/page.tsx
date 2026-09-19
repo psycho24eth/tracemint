@@ -87,7 +87,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="rise lg:col-span-7" style={delay(200)}>
+          <div className="rise lg:col-span-7" style={delay(200)} data-tour="hero-stage">
             <HeroStage />
           </div>
 

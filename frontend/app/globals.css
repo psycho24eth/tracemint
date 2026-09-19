@@ -624,6 +624,112 @@
     animation-delay: var(--delay, 0ms);
   }
 
+  /* Wallet dialog: rises in on wide screens and slides up as a sheet on phones. Transforms compose
+     with the dialog's centring, which Tailwind sets through the separate translate property. */
+  .wallet-sheet[data-state="open"] {
+    animation: wallet-in 260ms var(--ease-out);
+  }
+
+  .wallet-view {
+    animation: wallet-view-in 240ms var(--ease-out);
+  }
+
+  /* The active connection step breathes while the wallet is asking the visitor. */
+  .wallet-pulse {
+    animation: wallet-pulse 1.3s ease-in-out infinite;
+  }
+
+  /* Guided tour: a viewfinder glides between the parts of the page it explains. The dim is the frame's own
+     shadow, so the page underneath stays clickable. */
+  .tour-frame {
+    position: fixed;
+    z-index: 80;
+    pointer-events: none;
+    outline: 1px solid rgb(255 90 31 / 0.5);
+    box-shadow: 0 0 0 200vmax rgb(5 5 6 / 0.72);
+    transition:
+      top 560ms var(--ease-out),
+      left 560ms var(--ease-out),
+      width 560ms var(--ease-out),
+      height 560ms var(--ease-out);
+    animation: tour-dim 420ms ease-out;
+  }
+
+  .tour-lock {
+    position: absolute;
+    inset: 0;
+    animation: tour-lock 560ms var(--ease-out);
+  }
+
+  .tour-corner {
+    position: absolute;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 0 solid var(--signal);
+  }
+
+  .tour-corner[data-corner="tl"] {
+    top: -5px;
+    left: -5px;
+    border-top-width: 2px;
+    border-left-width: 2px;
+  }
+
+  .tour-corner[data-corner="tr"] {
+    top: -5px;
+    right: -5px;
+    border-top-width: 2px;
+    border-right-width: 2px;
+  }
+
+  .tour-corner[data-corner="bl"] {
+    bottom: -5px;
+    left: -5px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+  }
+
+  .tour-corner[data-corner="br"] {
+    right: -5px;
+    bottom: -5px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+  }
+
+  .tour-tag {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    left: -5px;
+    padding: 0.3rem 0.45rem;
+    background: var(--signal);
+    color: var(--background);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .tour-tag[data-below] {
+    top: calc(100% + 0.5rem);
+    bottom: auto;
+  }
+
+  .tour-card {
+    position: fixed;
+    z-index: 81;
+    transition:
+      top 560ms var(--ease-out),
+      left 560ms var(--ease-out);
+    animation: tour-card-in 420ms var(--ease-out);
+  }
+
+  .tour-card-body {
+    animation: wallet-view-in 320ms var(--ease-out);
+  }
+
   /* Dot-matrix rendering of the artwork: the hero's no-WebGL fallback */
   .dot-matrix {
     background-position: 60% 45%;
@@ -694,6 +800,59 @@
   }
 }
 
+@keyframes wallet-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+
+@media (max-width: 639px) {
+  .wallet-sheet[data-state="open"] {
+    animation-name: wallet-sheet-in;
+  }
+}
+
+@keyframes wallet-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes wallet-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes wallet-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes tour-dim {
+  from {
+    box-shadow: 0 0 0 200vmax rgb(5 5 6 / 0);
+  }
+}
+
+/* The corners start wide and close in on the target, like a camera finding focus. */
+@keyframes tour-lock {
+  from {
+    opacity: 0;
+    transform: scale(1.14);
+  }
+}
+
+@keyframes tour-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
 /* Without a pointer to tilt them, cards sway on their own so their depth still shows. */
 @media (hover: none) {
   .glass-idle {
@@ -714,8 +873,20 @@
   .glass-sweep,
   .scanline::after,
   .rise,
-  .float {
+  .float,
+  .wallet-sheet,
+  .wallet-view,
+  .wallet-pulse,
+  .tour-frame,
+  .tour-lock,
+  .tour-card,
+  .tour-card-body {
     animation: none !important;
+  }
+
+  .tour-frame,
+  .tour-card {
+    transition: none;
   }
 
   .glass-card {

@@ -1,5 +1,5 @@
 import { DemoRequestError, parseDemoWriteRequest } from "@/lib/demo/roles";
-import { ACCESS_HEADER, isValidAccessCode } from "@/lib/server/demo-access";
+import { ACCESS_HEADER, checkAccessCode } from "@/lib/server/demo-access";
 import { DemoConfigError, signDemoWrite } from "@/lib/server/demo-signer";
 import { createRateLimiter } from "@/lib/server/rate-limit";
 
@@ -9,8 +9,12 @@ export const maxDuration = 60;
 const tryWrite = createRateLimiter(6, 60_000);
 
 export async function POST(request: Request) {
-  if (!isValidAccessCode(request.headers.get(ACCESS_HEADER))) {
-    return Response.json({ error: "Judge access is required. Enter the access code on the For judges page." }, { status: 401 });
+  const access = checkAccessCode(request.headers.get(ACCESS_HEADER));
+  if (access === "expired") {
+    return Response.json({ error: "Your demo code has expired. Exit demo mode, then get a new code." }, { status: 401 });
+  }
+  if (access !== "valid") {
+    return Response.json({ error: "Demo access is required. Get a demo code from Connect wallet, or enter the judge code on the Judges page." }, { status: 401 });
   }
 
   let body: unknown;
