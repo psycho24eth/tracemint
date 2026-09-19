@@ -1,11 +1,13 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Droplets, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FAUCET_AMOUNT_GEN, faucetAvailable } from "@/lib/faucet";
 import { GENLAYER_CHAIN } from "@/lib/genlayer/network";
+import { balanceQueryKey } from "@/lib/hooks/useGenBalance";
 import { useRefreshLicenseHunter } from "@/lib/hooks/useLicenseHunter";
 
 type Request = { name: "idle" } | { name: "sending" } | { name: "sent" } | { name: "failed"; message: string };
@@ -22,6 +24,7 @@ export function TestGenButton({
   size?: "sm" | "default";
   className?: string;
 }) {
+  const queryClient = useQueryClient();
   const refresh = useRefreshLicenseHunter();
   const [request, setRequest] = useState<Request>({ name: "idle" });
   if (!faucetAvailable(GENLAYER_CHAIN)) return null;
@@ -34,8 +37,10 @@ export function TestGenButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address }),
       });
-      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      const body = (await response.json().catch(() => ({}))) as { error?: string; balance?: string };
       if (!response.ok) throw new Error(body.error ?? "The faucet didn't answer. Try again in a minute.");
+      // The faucet answers once the GEN has landed, so its balance is current even if the RPC is slow to agree.
+      if (body.balance) queryClient.setQueryData(balanceQueryKey(address), BigInt(body.balance));
       setRequest({ name: "sent" });
       void refresh();
     } catch (error) {
@@ -68,7 +73,7 @@ export function TestGenButton({
       )}
       {request.name === "sent" && (
         <p role="status" className="text-xs text-mint">
-          Added to your wallet. The balance updates in a few seconds.
+          Added to your wallet.
         </p>
       )}
     </div>

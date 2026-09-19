@@ -41,6 +41,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -55,7 +56,48 @@ describe("POST /api/faucet", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ balance: (100n * GEN).toString() });
     const funding = calls.find((call) => call.method === "sim_fundAccount");
-    expect(funding?.body).toContain(`"params":["${WALLET}",100000000000000000000]`);
+    expect(funding?.body).toContain(`"params":["0x000000000000000000000000000000000000A11E",100000000000000000000]`);
+  });
+
+  // Studio Next files GEN sent to a lowercase address where balance reads never look.
+  it("funds the checksummed address, whatever case the wallet reports", async () => {
+    balances = [0n, 100n * GEN];
+    const POST = await faucet();
+
+    await POST(ask("0x00000000000000000000000000000000deadbeef"));
+
+    const funding = calls.find((call) => call.method === "sim_fundAccount");
+    expect(funding?.body).toContain(`"params":["0x00000000000000000000000000000000DeaDBeef",`);
+  });
+
+  it("waits for the balance to rise before it reports success", async () => {
+    balances = [0n, 0n, 0n, 100n * GEN];
+    vi.useFakeTimers();
+    const POST = await faucet();
+
+    const pending = POST(ask(WALLET));
+    await vi.runAllTimersAsync();
+    const response = await pending;
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ balance: (100n * GEN).toString() });
+    expect(calls.filter((call) => call.method === "eth_getBalance")).toHaveLength(4);
+  });
+
+  it("says so when the GEN never lands, and lets the wallet ask again", async () => {
+    vi.useFakeTimers();
+    const POST = await faucet();
+
+    const pending = POST(ask(WALLET));
+    await vi.runAllTimersAsync();
+    const response = await pending;
+
+    expect(response.status).toBe(504);
+    await expect(response.json()).resolves.toEqual({ error: expect.stringContaining("hasn't reached your wallet") });
+
+    calls.length = 0;
+    balances = [0n, 100n * GEN];
+    expect((await POST(ask(WALLET))).status).toBe(200);
   });
 
   it("rejects anything that isn't a wallet address before calling the network", async () => {

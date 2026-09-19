@@ -4,11 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getStudioUrl } from "../genlayer/client";
 
+// Shares the contract queries' prefix so a refresh after a transaction updates the balance too.
+export const balanceQueryKey = (address: string | null) => ["license-hunter", "balance", address];
+
 /** A wallet's GEN balance, read from the GenLayer RPC so it is right whatever network the wallet is on. */
 export function useGenBalance(address: string | null) {
   return useQuery<bigint, Error>({
-    // Shares the contract queries' prefix so a refresh after a transaction updates the balance too.
-    queryKey: ["license-hunter", "balance", address],
+    queryKey: balanceQueryKey(address),
     queryFn: async () => {
       const response = await fetch(getStudioUrl(), {
         method: "POST",
