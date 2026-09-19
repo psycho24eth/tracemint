@@ -130,6 +130,24 @@ describe("WalletModal", () => {
     expect(actions.closeModal).toHaveBeenCalled();
   });
 
+  it("tells a wallet on the GenLayer testnet that its GEN stays there and Studio Next GEN is free", () => {
+    setWallet({ ...connected, chainId: 4221, isOnCorrectNetwork: false });
+    render(<WalletModal />);
+
+    expect(screen.getByRole("dialog", { name: "Switch to GenLayer" })).toHaveAccessibleDescription(
+      /on the GenLayer Testnet\. TraceMint runs on GenLayer Studio Next, a separate network with its own free GEN\. Your testnet GEN stays where it is\./,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Switch network" }));
+    expect(actions.switchNetwork).toHaveBeenCalled();
+  });
+
+  it("labels the balance with the network it is counted on", () => {
+    setWallet(connected);
+    render(<WalletModal />);
+
+    expect(screen.getByText("Studio Next balance")).toBeInTheDocument();
+  });
+
   it("manages the connected account: switch network, change wallet, disconnect", () => {
     setWallet({ ...connected, chainId: 1, isOnCorrectNetwork: false, modal: { open: true, view: "account" } });
     render(<WalletModal />);

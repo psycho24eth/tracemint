@@ -4,7 +4,7 @@ import { Droplets, LoaderCircle, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { faucetAvailable } from "@/lib/faucet";
-import { describeChain } from "@/lib/genlayer/connection";
+import { describeChain, GENLAYER_TESTNET_CHAIN_ID, NETWORK_SHORT_NAME } from "@/lib/genlayer/connection";
 import { GENLAYER_CHAIN, GENLAYER_NETWORK } from "@/lib/genlayer/network";
 import { useWallet } from "@/lib/genlayer/wallet";
 import { useGenBalance } from "@/lib/hooks/useGenBalance";
@@ -29,7 +29,8 @@ export function NetworkBanner() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-xs md:px-6">
           <TriangleAlert className="size-4 shrink-0 text-signal" aria-hidden="true" />
           <p className="min-w-0 flex-1">
-            {walletName} is on {describeChain(chainId)}. TraceMint runs on {GENLAYER_NETWORK.chainName}.
+            {walletName} is on {describeChain(chainId)}. TraceMint runs on {GENLAYER_NETWORK.chainName}
+            {chainId === GENLAYER_TESTNET_CHAIN_ID ? ", a separate network with its own free GEN." : "."}
             {failure?.action === "switch" && (
               <>
                 {" "}
@@ -56,7 +57,9 @@ export function NetworkBanner() {
       <div className="border-t border-mint/30 bg-mint/[0.05]">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-xs md:px-6">
           <Droplets className="size-4 shrink-0 text-mint" aria-hidden="true" />
-          <p className="min-w-0 flex-1">Your wallet has no GEN yet. GenLayer transactions pay their fees in GEN, and test GEN is free.</p>
+          <p className="min-w-0 flex-1">
+            Your wallet has no {NETWORK_SHORT_NAME} GEN yet. It pays the fees here, it&apos;s free, and it&apos;s separate from any GEN on the testnet.
+          </p>
           <TestGenButton address={address} />
         </div>
       </div>

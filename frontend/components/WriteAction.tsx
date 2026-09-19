@@ -10,6 +10,7 @@ import { DEMO_ROLE_LABELS, roleForMethod, type DemoRole } from "@/lib/demo/roles
 import { FAUCET_CEILING_WEI } from "@/lib/faucet";
 import { formatGen, txLink } from "@/lib/format";
 import { GENLAYER_NETWORK, getContractAddress } from "@/lib/genlayer/client";
+import { NETWORK_SHORT_NAME } from "@/lib/genlayer/connection";
 import { useTransactionKit } from "@/lib/genlayer/kit";
 import { useWallet } from "@/lib/genlayer/wallet";
 import { useGenBalance } from "@/lib/hooks/useGenBalance";
@@ -71,7 +72,7 @@ function WalletFunds({ address, balance, value }: { address: string; balance?: b
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border border-line px-3 py-2 text-xs">
       <p>
-        <span className="t-label mr-2">Wallet balance</span>
+        <span className="t-label mr-2">{NETWORK_SHORT_NAME} balance</span>
         <span className={short ? "text-signal" : undefined}>{formatGen(balance, 2)}</span>
         {short && <span className="text-signal"> · not enough to send {formatGen(value, 2)} plus fees</span>}
       </p>

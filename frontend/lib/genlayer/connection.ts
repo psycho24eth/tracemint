@@ -57,13 +57,19 @@ export async function readChainId(provider: Eip1193Provider): Promise<number | n
   }
 }
 
+/** GenLayer's public testnet. Its GEN is a separate balance from Studio Next's, which visitors often mix up. */
+export const GENLAYER_TESTNET_CHAIN_ID = 4221;
+
+/** The network name without the "GenLayer" prefix, for tight labels such as "Studio Next balance". */
+export const NETWORK_SHORT_NAME = GENLAYER_NETWORK.chainName.replace(/^GenLayer\s+/i, "");
+
 const KNOWN_CHAINS: Record<number, string> = {
   1: "Ethereum",
   10: "OP Mainnet",
   56: "BNB Chain",
   137: "Polygon",
   324: "zkSync Era",
-  4221: "GenLayer Testnet",
+  [GENLAYER_TESTNET_CHAIN_ID]: "GenLayer Testnet",
   8453: "Base",
   17000: "Holesky",
   42161: "Arbitrum One",

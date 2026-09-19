@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { FAUCET_CEILING_WEI, faucetAvailable } from "@/lib/faucet";
 import { addressLink, formatGen, shortAddress } from "@/lib/format";
-import { describeChain, type WalletError } from "@/lib/genlayer/connection";
+import { describeChain, GENLAYER_TESTNET_CHAIN_ID, NETWORK_SHORT_NAME, type WalletError } from "@/lib/genlayer/connection";
 import type { DiscoveredWallet, WalletInfo } from "@/lib/genlayer/eip6963";
 import { GENLAYER_CHAIN, GENLAYER_NETWORK } from "@/lib/genlayer/network";
 import { useWallet } from "@/lib/genlayer/wallet";
@@ -487,10 +487,15 @@ function SwitchFailedView({ wallet, error }: { wallet: Wallet; error: WalletErro
 
 function WrongNetworkView({ wallet }: { wallet: Wallet }) {
   const name = named(wallet.wallet);
+  const onTestnet = wallet.chainId === GENLAYER_TESTNET_CHAIN_ID;
   return (
     <Frame
       title="Switch to GenLayer"
-      description={`${name ?? "Your wallet"} is on ${describeChain(wallet.chainId)}. TraceMint runs on ${NETWORK}, so it signs there.`}
+      description={
+        onTestnet
+          ? `${name ?? "Your wallet"} is on the GenLayer Testnet. TraceMint runs on ${NETWORK}, a separate network with its own free GEN. Your testnet GEN stays where it is.`
+          : `${name ?? "Your wallet"} is on ${describeChain(wallet.chainId)}. TraceMint runs on ${NETWORK}, so it signs there.`
+      }
       step={1}
     >
       <Button type="button" className="w-full" onClick={() => void wallet.switchNetwork()}>
@@ -503,7 +508,7 @@ function WrongNetworkView({ wallet }: { wallet: Wallet }) {
 function BalanceRow({ balance }: { balance: ReturnType<typeof useGenBalance> }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="t-label">Balance</span>
+      <span className="t-label">{NETWORK_SHORT_NAME} balance</span>
       <span className="font-mono text-sm tabular-nums">
         {balance.data !== undefined ? formatGen(balance.data, 2) : balance.isError ? "Unavailable" : "Checking…"}
       </span>
@@ -524,7 +529,7 @@ function ReadyView({ wallet }: { wallet: Wallet }) {
       </div>
       {canFund && (
         <p className="text-sm text-muted-foreground">
-          Transactions on GenLayer pay their fees in GEN. This is a test network, so test GEN is free.
+          Fees here are paid in {NETWORK_SHORT_NAME} GEN. It&apos;s separate from GEN on the GenLayer testnet, and free.
         </p>
       )}
       {empty ? (
@@ -595,7 +600,11 @@ function AccountView({ wallet }: { wallet: Wallet }) {
         </div>
         {!wallet.isOnCorrectNetwork && (
           <div className="space-y-3 px-5 py-3.5">
-            <p className="text-sm">TraceMint signs on {NETWORK}. Switch networks to pay, register, or dispute.</p>
+            <p className="text-sm">
+              {wallet.chainId === GENLAYER_TESTNET_CHAIN_ID
+                ? `TraceMint signs on ${NETWORK}, a separate network with its own free GEN. Your testnet GEN stays where it is.`
+                : `TraceMint signs on ${NETWORK}. Switch networks to pay, register, or dispute.`}
+            </p>
             {failure?.action === "switch" && (
               <p role="alert" className="text-xs text-destructive">
                 {switchFailureCopy(failure.error, name, describeChain(wallet.chainId))[1]}
