@@ -7,7 +7,6 @@ import { Reveal } from "@/components/hero/Reveal";
 import { CollectionPreview } from "@/components/landing/CollectionPreview";
 import { HeroStage } from "@/components/landing/HeroStage";
 import { LiveStats } from "@/components/landing/LiveStats";
-import { LiveTicker } from "@/components/landing/LiveTicker";
 import { PageShell } from "@/components/PageShell";
 import { SectionHeading } from "@/components/SectionHeading";
 
@@ -96,8 +95,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      <LiveTicker />
 
       <div className="mx-auto max-w-7xl space-y-28 px-4 py-20 md:px-6 md:py-28">
         <section id="how-it-works" aria-label="How it works" className="scroll-mt-24">

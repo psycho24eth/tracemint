@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 
-/** The embossed "minted" seal on license cards. */
+/** The embossed seal on licence cards. Decoration: a licence is a contract record, not a token. */
 export function Seal({ className = "" }: { className?: string }) {
   const ringId = `seal-${useId()}`;
   return (
@@ -13,7 +13,7 @@ export function Seal({ className = "" }: { className?: string }) {
       <circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" strokeWidth="1" />
       <circle cx="50" cy="50" r="26" fill="none" stroke="currentColor" strokeWidth="0.8" />
       <text fontSize="8.6" letterSpacing="2" fill="currentColor">
-        <textPath href={`#${ringId}`}>MINTED ON GENLAYER · TRACEMINT ·</textPath>
+        <textPath href={`#${ringId}`}>RECORDED ON GENLAYER · TRACEMINT ·</textPath>
       </text>
       <path d="M50 37.5l3.6 8.4 9.1.6-7 5.8 2.3 8.8-8-5-8 5 2.3-8.8-7-5.8 9.1-.6z" fill="currentColor" />
     </svg>

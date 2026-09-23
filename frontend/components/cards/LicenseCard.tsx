@@ -15,7 +15,7 @@ export function LicenseFace({ license, work, idle = false }: { license: License;
   return (
     <Collectible art={work?.imageUrl} finish="foil" tone="mint" idle={idle} phase={phaseFor(license.id + 7)}>
       <Layer z={10}>
-        <CardRow left={`License Nº ${serial(license.id)}`} right="Minted" />
+        <CardRow left={`License Nº ${serial(license.id)}`} right="Issued" />
       </Layer>
       <Layer z={26} className="glass-art isolate">
         <LicenseCover seed={licenseSeed(license)} className="block aspect-[4/3] w-full" />
