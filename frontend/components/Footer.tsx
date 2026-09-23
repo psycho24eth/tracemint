@@ -24,15 +24,17 @@ const COLUMNS: Column[] = [
   {
     heading: "Learn",
     links: [
-      { label: "How it works", href: "/#how-it-works" },
+      { label: "How it works", href: "/how-it-works" },
       { label: "What it costs", href: "/pricing" },
       { label: "Questions and answers", href: "/faq" },
+      { label: "About TraceMint", href: "/about" },
       { label: "Verify in five minutes", href: "/judges" },
     ],
   },
   {
     heading: "Protocol",
     links: [
+      { label: "Developer docs", href: "/docs" },
       { label: "Contract source", href: `${REPO}/blob/main/contracts/license_hunter.py`, external: true },
       { label: "Source on GitHub", href: REPO, external: true },
       { label: "GenLayer docs", href: "https://docs.genlayer.com", external: true },

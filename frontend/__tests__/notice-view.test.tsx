@@ -1,4 +1,4 @@
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NoticeView } from "@/components/NoticeView";
 import type { Claim, Work, License } from "@/lib/contracts/LicenseHunter";
@@ -69,12 +69,13 @@ describe("NoticeView", () => {
   it("shows the fee breakdown with correct calculations", () => {
     render(<NoticeView claim={claim} work={work} license={null} />);
 
-    expect(screen.getByText("10 GEN")).toBeInTheDocument();
-    expect(screen.getByText("× 3")).toBeInTheDocument();
-    expect(screen.getByText("× 1.5")).toBeInTheDocument();
-    expect(screen.getByText("45 GEN")).toBeInTheDocument();
-    expect(screen.getByText((content, element) => content.includes("43.65 GEN"))).toBeInTheDocument();
-    expect(screen.getByText((content, element) => content.includes("1.35 GEN"))).toBeInTheDocument();
+    const panel = within(screen.getByRole("region", { name: "Fee breakdown" }));
+    expect(panel.getByText("10 GEN")).toBeInTheDocument();
+    expect(panel.getByText("× 3")).toBeInTheDocument();
+    expect(panel.getByText("× 1.5")).toBeInTheDocument();
+    expect(panel.getByText("45 GEN")).toBeInTheDocument();
+    expect(panel.getByText((content) => content.includes("43.65 GEN"))).toBeInTheDocument();
+    expect(panel.getByText((content) => content.includes("1.35 GEN"))).toBeInTheDocument();
   });
 
   it("renders pay action with correct props for NOTICE_ISSUED", () => {

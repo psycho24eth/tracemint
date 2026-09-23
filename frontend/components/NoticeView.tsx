@@ -5,8 +5,12 @@ import Link from "next/link";
 import { EvidenceView } from "@/components/cards/EvidenceView";
 import { STATUS_CHIPS } from "@/components/ClaimsTable";
 import { DisputeForm } from "@/components/DisputeForm";
+import { NoticeBrief } from "@/components/notice/NoticeBrief";
+import { SendNotice } from "@/components/notice/SendNotice";
 import { WriteAction } from "@/components/WriteAction";
-import type { Claim, License, Work } from "@/lib/contracts/LicenseHunter";
+import { actingAddress } from "@/lib/actor";
+import type { Claim, ClaimStatus, License, Work } from "@/lib/contracts/LicenseHunter";
+import { useDemoMode } from "@/lib/demo/DemoModeProvider";
 import {
   addressLink,
   feeBreakdown,
@@ -21,10 +25,28 @@ import {
   type Prominence,
   type Usage,
 } from "@/lib/format";
+import { useWallet } from "@/lib/genlayer/wallet";
+
+/**
+ * What the page leads with. A stranger arriving from a link should read what is being offered, not
+ * a 96px accusation — the verdict is still shown, as a field, where it belongs.
+ */
+const HEADLINE: Record<ClaimStatus, string> = {
+  NOTICE_ISSUED: "A licence for this image",
+  DISPUTE_REJECTED: "A licence for this image",
+  PAID: "Licensed",
+  WITHDRAWN: "Notice withdrawn",
+  NO_NOTICE: "No notice issued",
+};
 
 export function NoticeView({ claim, work, license }: { claim: Claim; work: Work; license: License | null }) {
+  const { role } = useDemoMode();
+  const { address } = useWallet();
   const breakdown = feeBreakdown(work.basePrice, claim.usage, claim.prominence);
   const payable = claim.status === "NOTICE_ISSUED" || claim.status === "DISPUTE_REJECTED";
+
+  const actor = actingAddress(role, address);
+  const isCreator = actor !== null && actor.toLowerCase() === work.creator.toLowerCase();
 
   return (
     <div className="space-y-10">
@@ -34,13 +56,23 @@ export function NoticeView({ claim, work, license }: { claim: Claim; work: Work;
             <span className="t-index mr-2">Notice #{claim.id}</span>
             {work.title}
           </p>
-          <h1 className="display-condensed mt-3 text-6xl md:text-8xl">{VERDICT_LABELS[claim.verdict]}</h1>
+          <h1 className="display-condensed mt-3 text-5xl md:text-7xl">{HEADLINE[claim.status]}</h1>
+          {payable && (
+            <p className="mt-4 max-w-xl text-muted-foreground">
+              Settle it in one transaction, or dispute it for free. Nothing happens automatically either way.
+            </p>
+          )}
         </div>
         <div className="flex flex-col items-start gap-3 md:col-span-4 md:items-end md:justify-end">
           <span className={`chip ${STATUS_CHIPS[claim.status]}`}>{STATUS_LABELS[claim.status]}</span>
+          {payable && <p className="display-wide text-4xl text-signal">{formatGen(claim.fee)}</p>}
           <p className="t-label">Filed {formatDate(claim.createdAt)}</p>
         </div>
       </header>
+
+      {payable && <NoticeBrief claim={claim} work={work} />}
+
+      {isCreator && payable && <SendNotice claim={claim} work={work} />}
 
       <div className="grid gap-8 lg:grid-cols-12">
         <div className="space-y-8 lg:col-span-7">
@@ -67,21 +99,57 @@ export function NoticeView({ claim, work, license }: { claim: Claim; work: Work;
             <p className="font-serif text-2xl leading-snug">{claim.reasoning}</p>
           </blockquote>
 
-          {claim.status !== "NO_NOTICE" && (
-            <div className="panel p-5 text-sm">
-              <p className="t-label">Addressed to</p>
-              {claim.walletOnPage ? (
-                <a href={addressLink(claim.walletOnPage)} target="_blank" rel="noreferrer" className="t-link mt-2 inline-block">
-                  {shortAddress(claim.walletOnPage)}
-                </a>
-              ) : (
-                <p className="mt-2 text-muted-foreground">No wallet was found on the page, so any wallet can settle this notice.</p>
-              )}
+          <dl className="panel grid gap-4 p-5 text-sm sm:grid-cols-2">
+            <div className="space-y-1">
+              <dt className="t-label">Verdict</dt>
+              <dd>{VERDICT_LABELS[claim.verdict]}</dd>
             </div>
-          )}
+            <div className="space-y-1">
+              <dt className="t-label">Registered by</dt>
+              <dd>
+                <a href={addressLink(work.creator)} target="_blank" rel="noreferrer" className="t-link">
+                  {shortAddress(work.creator)}
+                </a>
+              </dd>
+            </div>
+            {claim.status !== "NO_NOTICE" && (
+              <div className="space-y-1 sm:col-span-2">
+                <dt className="t-label">Addressed to</dt>
+                <dd>
+                  {claim.walletOnPage ? (
+                    <a href={addressLink(claim.walletOnPage)} target="_blank" rel="noreferrer" className="t-link">
+                      {shortAddress(claim.walletOnPage)}
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      No wallet was found on the page, so any wallet can settle this notice.
+                    </span>
+                  )}
+                </dd>
+              </div>
+            )}
+          </dl>
         </div>
 
         <aside className="space-y-6 lg:col-span-5">
+          {payable && (
+            <div className="panel p-5">
+              <p className="t-label mb-3 text-foreground">Settle it</p>
+              <WriteAction method="pay_license" args={[claim.id]} value={claim.fee} label={`Pay ${formatGen(claim.fee)} and get a license`} />
+              <p className="mt-3 text-xs text-muted-foreground">
+                One transaction for the exact amount shown. You receive an on-chain licence for this use, dated and
+                valid for a year.
+              </p>
+            </div>
+          )}
+
+          {claim.status === "NOTICE_ISSUED" && (
+            <div className="panel p-5">
+              <p className="t-label mb-3 text-foreground">Or dispute it</p>
+              <DisputeForm claim={claim} />
+            </div>
+          )}
+
           {breakdown && (
             <section className="panel" aria-label="Fee breakdown">
               <div className="panel-head">
@@ -107,21 +175,12 @@ export function NoticeView({ claim, work, license }: { claim: Claim; work: Work;
                 </div>
               </dl>
               <p className="border-t border-line px-5 py-3 text-xs text-muted-foreground">
-                The creator receives {formatGen(breakdown.creatorAmount)} and the protocol keeps {formatGen(breakdown.protocolAmount)}.
+                The creator receives {formatGen(breakdown.creatorAmount)} and the protocol keeps {formatGen(breakdown.protocolAmount)}.{" "}
+                <Link href="/pricing" className="t-link">
+                  How this is priced
+                </Link>
               </p>
             </section>
-          )}
-
-          {payable && (
-            <div className="panel p-5">
-              <WriteAction method="pay_license" args={[claim.id]} value={claim.fee} label={`Pay ${formatGen(claim.fee)} and get a license`} />
-            </div>
-          )}
-
-          {claim.status === "NOTICE_ISSUED" && (
-            <div className="panel p-5">
-              <DisputeForm claim={claim} />
-            </div>
           )}
 
           {claim.status === "PAID" && license && (
@@ -144,7 +203,7 @@ export function NoticeView({ claim, work, license }: { claim: Claim; work: Work;
           )}
 
           <div className="panel p-5">
-            <p className="t-label">License terms</p>
+            <p className="t-label">License terms, as the creator published them</p>
             <p className="mt-2 text-sm">{work.terms}</p>
           </div>
 

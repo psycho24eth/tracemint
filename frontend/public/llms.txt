@@ -38,9 +38,12 @@ agree, in which case nothing is recorded and the agent tries again on its next r
 ## Pages
 
 - Home: https://tracemint.vercel.app/
+- How it works, in detail: https://tracemint.vercel.app/how-it-works
 - What it costs: https://tracemint.vercel.app/pricing
 - Questions and answers: https://tracemint.vercel.app/faq
 - Registered works: https://tracemint.vercel.app/works
 - Notices issued: https://tracemint.vercel.app/notices
+- Developer docs, every contract method: https://tracemint.vercel.app/docs
+- About, and what it does not claim: https://tracemint.vercel.app/about
 - Verify the whole flow in five minutes: https://tracemint.vercel.app/judges
 - Contract source: https://github.com/psycho24eth/tracemint/blob/main/contracts/license_hunter.py

@@ -115,6 +115,10 @@ export default function LandingPage() {
               </li>
             ))}
           </ol>
+          <Link href="/how-it-works" className="btn-line mt-8">
+            What happens at each stage
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         </section>
 
         <section aria-label="The collection">
