@@ -52,12 +52,23 @@ export async function waitForDemoTx(
     intervalMs = 4_000,
     timeoutMs = 300_000,
     wait = sleep,
-  }: { fetchFn?: typeof fetch; intervalMs?: number; timeoutMs?: number; wait?: (ms: number) => Promise<void> } = {},
+    onStatus,
+  }: {
+    fetchFn?: typeof fetch;
+    intervalMs?: number;
+    timeoutMs?: number;
+    wait?: (ms: number) => Promise<void>;
+    /** Called with every status the network reports, so the page can show the consensus in progress. */
+    onStatus?: (status: TxStatus) => void;
+  } = {},
 ): Promise<TxStatus> {
   let status: TxStatus = { hash, status: "SUBMITTED", result: null, decided: false, successful: null };
   for (let waited = 0; ; waited += intervalMs) {
     const response = await fetchFn(`/api/tx/${hash}`, { cache: "no-store" });
-    if (response.ok) status = (await response.json()) as TxStatus;
+    if (response.ok) {
+      status = (await response.json()) as TxStatus;
+      onStatus?.(status);
+    }
     if (status.decided || waited >= timeoutMs) return status;
     await wait(intervalMs);
   }

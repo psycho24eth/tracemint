@@ -5,7 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { txLink } from "@/lib/format";
 import { useRefreshLicenseHunter } from "@/lib/hooks/useLicenseHunter";
 import { outcomeMessage, STILL_WAITING_MESSAGE, waitForDemoTx } from "@/lib/tx";
+import { advance, FIRST_ROUND, slowest, stageLabel, type Progress } from "@/lib/validator-stages";
 import { Button } from "./ui/button";
+import { ValidatorTimer, type Settled, type Verdict } from "./ValidatorTimer";
 
 type ScanState = "idle" | "loading" | "success" | "error";
 
@@ -16,10 +18,10 @@ type FiledClaim = {
   distance: number;
 };
 
-type ClaimOutcome = { text: string; problem: boolean };
+type ClaimOutcome = { text: string; verdict: Verdict };
 
-const DECIDED: ClaimOutcome = { text: "Decided. See the result under Claims below.", problem: false };
-const STILL_WAITING: ClaimOutcome = { text: STILL_WAITING_MESSAGE, problem: false };
+const DECIDED: ClaimOutcome = { text: "Decided. See the result under Claims below.", verdict: "accepted" };
+const STILL_WAITING: ClaimOutcome = { text: STILL_WAITING_MESSAGE, verdict: "unknown" };
 
 const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -28,6 +30,8 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
   const [candidates, setCandidates] = useState(0);
   const [filed, setFiled] = useState<FiledClaim[]>([]);
   const [outcomes, setOutcomes] = useState<Record<string, ClaimOutcome>>({});
+  const [stages, setStages] = useState<Record<string, Progress>>({});
+  const [batch, setBatch] = useState<{ startedAt: number; settled?: Settled } | null>(null);
   const [skipped, setSkipped] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -49,10 +53,15 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
       try {
         const status = await waitForDemoTx(hash, {
           wait: (ms) => (current() ? pause(ms) : Promise.reject(new Error("The scan was replaced."))),
+          onStatus: (update) => {
+            if (current()) {
+              setStages((previous) => ({ ...previous, [hash]: advance(previous[hash] ?? FIRST_ROUND, update.status) }));
+            }
+          },
         });
         const problem = status.decided ? outcomeMessage(status) : null;
         if (problem) {
-          outcome = { text: problem, problem: true };
+          outcome = { text: problem, verdict: "problem" };
         } else if (status.decided) {
           outcome = DECIDED;
           void refresh();
@@ -65,11 +74,20 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
     [refresh],
   );
 
+  useEffect(() => {
+    if (filed.length === 0 || !filed.every((claim) => outcomes[claim.hash])) return;
+    const verdicts = filed.map((claim) => outcomes[claim.hash].verdict);
+    const verdict: Verdict = verdicts.includes("problem") ? "problem" : verdicts.includes("unknown") ? "unknown" : "accepted";
+    setBatch((previous) => (previous && !previous.settled ? { ...previous, settled: { at: Date.now(), verdict } } : previous));
+  }, [filed, outcomes]);
+
   const handleScan = useCallback(async () => {
     const run = ++scanRun.current;
     setState("loading");
     setErrorMessage(null);
     setOutcomes({});
+    setStages({});
+    setBatch(null);
 
     try {
       const body: { workId: number; runId?: string } = { workId };
@@ -96,6 +114,7 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
       setSkipped(data.skipped);
       setErrors(data.errors || []);
       setState("success");
+      if (data.filed.length > 0) setBatch({ startedAt: Date.now() });
       void refresh();
       for (const claim of data.filed as FiledClaim[]) void track(claim.hash, run);
     } catch (error) {
@@ -125,8 +144,9 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
                     <a href={txLink(claim.hash)} target="_blank" rel="noreferrer" className="t-link">
                       View transaction
                     </a>
-                    <p className={outcome?.problem ? "text-destructive" : "text-muted-foreground"}>
-                      {outcome?.text ?? "Validators are judging this claim…"}
+                    <p className={outcome?.verdict === "problem" ? "text-destructive" : "text-muted-foreground"}>
+                      {outcome?.text ??
+                        (stages[claim.hash] ? `${stageLabel(stages[claim.hash])}…` : "Validators are judging this claim…")}
                     </p>
                   </li>
                 );
@@ -142,7 +162,13 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
             ))}
           </div>
         )}
-        <p className="text-xs text-muted-foreground">Validators usually decide within 1-2 minutes.</p>
+        {batch && (
+          <ValidatorTimer
+            startedAt={batch.startedAt}
+            progress={slowest(filed.map((claim) => stages[claim.hash] ?? FIRST_ROUND))}
+            settled={batch.settled}
+          />
+        )}
         <Button variant="outline" onClick={() => setState("idle")}>
           Scan again
         </Button>

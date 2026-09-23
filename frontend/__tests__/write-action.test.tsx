@@ -88,6 +88,31 @@ describe("WriteAction in demo mode", () => {
     expect(fetchMock.mock.calls[1][0]).toBe(`/api/tx/${HASH}`);
   });
 
+  it("times the wait and names the consensus step the validators are on", async () => {
+    state.role = "creator";
+    fetchMock.mockImplementation(async (url: string) =>
+      url === "/api/demo/write" ? reply({ hash: HASH }) : decided({ status: "PROPOSING", result: null, decided: false, successful: null }),
+    );
+    render(<WriteAction method="withdraw_earnings" args={[]} label="Withdraw" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Withdraw" }));
+
+    expect(await screen.findByText("Leader proposes")).toBeInTheDocument();
+    expect(screen.getByRole("timer")).toHaveTextContent("0:00");
+    expect(screen.getByRole("button", { name: /Validators vote/ })).toBeInTheDocument();
+  });
+
+  it("keeps the time the decision took", async () => {
+    state.role = "creator";
+    render(<WriteAction method="withdraw_earnings" args={[]} label="Withdraw" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Withdraw" }));
+
+    expect(await screen.findByText(/^Done\./)).toBeInTheDocument();
+    expect(screen.getByText(/Decided in \d:\d\d/)).toBeInTheDocument();
+    expect(screen.getByRole("timer")).toBeInTheDocument();
+  });
+
   it("sends a payment value as a wei string", async () => {
     state.role = "site-owner";
     render(<WriteAction method="pay_license" args={[7]} value={45n * GEN} label="Pay 45 GEN" />);

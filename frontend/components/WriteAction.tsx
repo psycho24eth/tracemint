@@ -4,6 +4,7 @@ import { GenLayerTransactionPanel, type SubmitInput, type TrackedStatus } from "
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ValidatorTimer, type Settled, type Verdict } from "@/components/ValidatorTimer";
 import { TestGenButton } from "@/components/wallet/TestGenButton";
 import { useDemoMode } from "@/lib/demo/DemoModeProvider";
 import { DEMO_ROLE_LABELS, roleForMethod, type DemoRole } from "@/lib/demo/roles";
@@ -16,6 +17,7 @@ import { useWallet } from "@/lib/genlayer/wallet";
 import { useGenBalance } from "@/lib/hooks/useGenBalance";
 import { useRefreshLicenseHunter } from "@/lib/hooks/useLicenseHunter";
 import { outcomeMessage, STILL_WAITING_MESSAGE, submitDemoWrite, UNDECIDED_MESSAGE, waitForDemoTx } from "@/lib/tx";
+import { advance, FIRST_ROUND, type Progress } from "@/lib/validator-stages";
 
 type Phase =
   | { name: "idle" }
@@ -25,6 +27,9 @@ type Phase =
   | { name: "wallet" }
   | { name: "done"; hash?: string }
   | { name: "failed"; message: string; hash?: string };
+
+/** The clock and consensus progress for the transaction on screen, from the first status to the decision. */
+type Run = { startedAt: number; progress: Progress; settled?: Settled };
 
 export type WriteActionProps = {
   method: string;
@@ -107,12 +112,41 @@ export function WriteAction({
   const refresh = useRefreshLicenseHunter();
   const contractAddress = getContractAddress();
   const [phase, setPhase] = useState<Phase>({ name: "idle" });
+  const [run, setRun] = useState<Run | null>(null);
+
+  const noteStatus = (statusName: string | undefined) =>
+    setRun((previous) => {
+      const current = previous ?? { startedAt: Date.now(), progress: FIRST_ROUND };
+      return { ...current, progress: advance(current.progress, statusName) };
+    });
+  const freeze = (verdict: Verdict) =>
+    setRun((previous) => (previous ? { ...previous, settled: { at: Date.now(), verdict } } : previous));
 
   // The panel re-estimates fees whenever the tx object changes, so its identity must stay stable across renders.
   const argsKey = JSON.stringify(args, (_key, item) => (typeof item === "bigint" ? item.toString() : item));
   const tx = useMemo<SubmitInput>(
     () => ({ kind: "write", address: contractAddress as `0x${string}`, method, args }),
     [contractAddress, method, argsKey],
+  );
+
+  // The panel's timeline names the steps but never says how long they have taken, so its status updates
+  // feed the clock next to it. createTransactionKit returns a plain object, so overriding one method is safe.
+  const tracked = useMemo(
+    () =>
+      kit &&
+      ({
+        ...kit,
+        track: (id: `0x${string}`, onUpdate: (status: TrackedStatus) => void, options?: { until?: "decided" | "finalized" }) =>
+          kit.track(
+            id,
+            (status) => {
+              noteStatus(status.statusName);
+              onUpdate(status);
+            },
+            options,
+          ),
+      } satisfies typeof kit),
+    [kit],
   );
 
   const reason = blockedReason({
@@ -134,11 +168,13 @@ export function WriteAction({
 
   async function runDemoWrite(demoRole: DemoRole) {
     setPhase({ name: "submitting" });
+    setRun({ startedAt: Date.now(), progress: FIRST_ROUND });
     let hash: string | undefined;
     try {
       hash = await submitDemoWrite({ role: demoRole, method, args, value, accessCode: accessCode ?? undefined });
       setPhase({ name: "pending", hash });
-      const status = await waitForDemoTx(hash);
+      const status = await waitForDemoTx(hash, { onStatus: (update) => noteStatus(update.status) });
+      freeze(!status.decided ? "unknown" : status.successful ? "accepted" : "problem");
       if (status.successful) {
         succeed(hash);
         return;
@@ -146,12 +182,14 @@ export function WriteAction({
       const message = status.decided ? (outcomeMessage(status) ?? UNDECIDED_MESSAGE) : STILL_WAITING_MESSAGE;
       setPhase({ name: "failed", message, hash });
     } catch (error) {
+      freeze("unknown");
       setPhase({ name: "failed", message: (error as Error).message, hash });
     }
   }
 
   async function start() {
     if (onBeforeSubmit && !onBeforeSubmit()) return;
+    setRun(null);
     if (role) {
       void runDemoWrite(role);
       return;
@@ -171,6 +209,7 @@ export function WriteAction({
   }
 
   function handleWalletDone(status: TrackedStatus) {
+    freeze(status.successful !== false ? "accepted" : "problem");
     if (status.successful !== false) {
       succeed(status.genlayerTxId);
       return;
@@ -181,11 +220,11 @@ export function WriteAction({
 
   return (
     <div className="space-y-2">
-      {phase.name === "wallet" && kit && address ? (
+      {phase.name === "wallet" && tracked && address ? (
         <div className="space-y-2">
           <WalletFunds address={address} balance={balance.data} value={value} />
           <GenLayerTransactionPanel
-            kit={kit}
+            kit={tracked}
             tx={tx}
             userValue={value}
             network={GENLAYER_NETWORK.chainName}
@@ -193,6 +232,7 @@ export function WriteAction({
             trackUntil="decided"
             onDone={handleWalletDone}
           />
+          {run && <ValidatorTimer startedAt={run.startedAt} progress={run.progress} settled={run.settled} compact />}
           <Button type="button" variant="ghost" size="sm" onClick={() => setPhase({ name: "idle" })}>
             Cancel
           </Button>
@@ -210,10 +250,13 @@ export function WriteAction({
       )}
       {reason && <p className="text-xs text-muted-foreground">{reason}</p>}
       {!reason && needsWallet && <p className="text-xs text-muted-foreground">Connect a wallet to continue.</p>}
-      {phase.name === "pending" && (
-        <p role="status" className="text-xs text-muted-foreground">
-          Submitted. Validators usually decide within 1–2 minutes. <TxLink hash={phase.hash} />
-        </p>
+      {run && !run.settled && (phase.name === "submitting" || phase.name === "pending") && (
+        <ValidatorTimer startedAt={run.startedAt} progress={run.progress}>
+          {phase.name === "pending" ? <TxLink hash={phase.hash} /> : null}
+        </ValidatorTimer>
+      )}
+      {run?.settled && (phase.name === "done" || phase.name === "failed") && (
+        <ValidatorTimer startedAt={run.startedAt} progress={run.progress} settled={run.settled} compact />
       )}
       {phase.name === "done" && (
         <p role="status" className="text-xs text-mint">

@@ -95,6 +95,27 @@ describe("ScanNowButton", () => {
     expect(refreshMock).toHaveBeenCalledTimes(2);
   });
 
+  it("times the batch and freezes once the last claim lands", async () => {
+    mockFetch.mockImplementation(async (url: string) => ({
+      ok: true,
+      json: async () =>
+        url === "/api/scan"
+          ? {
+              candidates: 1,
+              filed: [{ hash: "0xblog", pageUrl: "https://example.com/blog", imageUrl: "https://example.com/b.png", distance: 0 }],
+              skipped: 0,
+              errors: [],
+            }
+          : { hash: "0xblog", status: "ACCEPTED", result: "FINISHED_WITH_RETURN", decided: true, successful: true },
+    }));
+
+    render(<ScanNowButton workId={1} useRunId={true} />);
+    await userEvent.setup().click(screen.getByText("Scan now"));
+
+    expect(await screen.findByText(/Decided in \d:\d\d/)).toBeInTheDocument();
+    expect(screen.getByRole("timer")).toBeInTheDocument();
+  });
+
   describe("while a claim has no decision", () => {
     const scanResponse = {
       ok: true,
@@ -115,6 +136,22 @@ describe("ScanNowButton", () => {
       await userEvent.setup().click(screen.getByText("Scan now"));
 
       expect(await screen.findByText("Validators are judging this claim…")).toBeInTheDocument();
+    });
+
+    it("names the step it is on once the network reports one", async () => {
+      mockFetch.mockImplementation(async (url: string) => ({
+        ok: true,
+        json: async () =>
+          url === "/api/scan"
+            ? (await scanResponse.json())
+            : { hash: "0xshop", status: "COMMITTING", result: null, decided: false, successful: null },
+      }));
+
+      render(<ScanNowButton workId={1} useRunId={true} />);
+      await userEvent.setup().click(screen.getByText("Scan now"));
+
+      expect(await screen.findByText("Validators vote…")).toBeInTheDocument();
+      expect(screen.getByRole("timer")).toHaveTextContent("0:00");
     });
 
     it("points to the explorer when the status lookup fails", async () => {
