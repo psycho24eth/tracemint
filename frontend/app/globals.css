@@ -298,6 +298,69 @@
     border-color: rgb(255 92 122 / 0.45);
   }
 
+  /* Logo: a cube that turns the scan frame into the licence it becomes */
+  .logo-cube {
+    display: inline-block;
+    perspective: calc(var(--logo-half) * 9);
+    flex: none;
+  }
+
+  .logo-turn {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    animation: logo-turn 16s linear infinite;
+  }
+
+  /* A slower turn while the pointer is on it reads as deliberate rather than restless. */
+  .group:hover .logo-turn,
+  .logo-cube:hover .logo-turn {
+    animation-duration: 4.5s;
+  }
+
+  .logo-face {
+    position: absolute;
+    inset: 0;
+    display: block;
+    /* The cube is small and opaque, so drawing the back faces costs nothing and avoids gaps mid-turn. */
+    backface-visibility: hidden;
+  }
+
+  .logo-face > svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .logo-front {
+    transform: translateZ(var(--logo-half));
+  }
+
+  .logo-back {
+    transform: rotateY(180deg) translateZ(var(--logo-half));
+  }
+
+  .logo-right {
+    transform: rotateY(90deg) translateZ(var(--logo-half));
+  }
+
+  .logo-left {
+    transform: rotateY(-90deg) translateZ(var(--logo-half));
+  }
+
+  .logo-top {
+    background: #1a1a1a;
+    box-shadow: inset 0 0 0 1px rgb(255 90 31 / 0.5);
+    transform: rotateX(90deg) translateZ(var(--logo-half));
+  }
+
+  .logo-bottom {
+    background: #070707;
+    transform: rotateX(-90deg) translateZ(var(--logo-half));
+  }
+
   .live-dot {
     width: 0.5rem;
     height: 0.5rem;
@@ -305,6 +368,44 @@
     background: var(--signal);
     box-shadow: 0 0 0.6rem var(--signal);
     animation: blink 1.2s steps(2) infinite;
+  }
+
+  /* Footer wordmark: an outline with one slow light passing over it */
+  .footer-mark {
+    position: relative;
+  }
+
+  .footer-mark-outline,
+  .footer-mark-sweep {
+    margin: 0;
+    padding-inline: 0.5rem;
+    font-size: 24vw;
+    text-align: center;
+    color: transparent;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .footer-mark-outline {
+    -webkit-text-stroke: 1px rgb(234 234 229 / 0.14);
+  }
+
+  .footer-mark-sweep {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      100deg,
+      transparent,
+      rgb(255 90 31 / 0.14) 30%,
+      rgb(255 90 31 / 0.4) 50%,
+      rgb(255 90 31 / 0.14) 70%,
+      transparent
+    );
+    background-size: 80vw 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: footer-sweep 14s linear infinite;
   }
 
   /* Event ticker */
@@ -748,6 +849,24 @@
   }
 }
 
+@keyframes logo-turn {
+  from {
+    transform: rotateX(-16deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(-16deg) rotateY(360deg);
+  }
+}
+
+@keyframes footer-sweep {
+  from {
+    background-position: -85vw 0;
+  }
+  to {
+    background-position: 185vw 0;
+  }
+}
+
 @keyframes blink {
   50% {
     opacity: 0.2;
@@ -867,6 +986,8 @@
   }
 
   .live-dot,
+  .logo-turn,
+  .footer-mark-sweep,
   .ticker-track,
   .foil,
   .glass-idle,
@@ -898,6 +1019,10 @@
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  .logo-turn {
+    transform: none;
   }
 }
 
