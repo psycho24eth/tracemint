@@ -16,7 +16,14 @@ import { useTransactionKit } from "@/lib/genlayer/kit";
 import { useWallet } from "@/lib/genlayer/wallet";
 import { useGenBalance } from "@/lib/hooks/useGenBalance";
 import { useRefreshLicenseHunter } from "@/lib/hooks/useLicenseHunter";
-import { outcomeMessage, STILL_WAITING_MESSAGE, submitDemoWrite, UNDECIDED_MESSAGE, waitForDemoTx } from "@/lib/tx";
+import {
+  outcomeMessage,
+  STILL_WAITING_MESSAGE,
+  submitDemoWrite,
+  UNDECIDED_MESSAGE,
+  waitForDemoTx,
+  walletOutcomeMessage,
+} from "@/lib/tx";
 import { advance, FIRST_ROUND, type Progress } from "@/lib/validator-stages";
 
 type Phase =
@@ -37,6 +44,8 @@ export type WriteActionProps = {
   label: string;
   value?: bigint;
   disabled?: boolean;
+  /** Why this action cannot run, when the caller knows something the component cannot work out itself. */
+  unavailable?: string | null;
   /** Runs first when the button is pressed; return false to stop, for example when a form is invalid. */
   onBeforeSubmit?: () => boolean;
   onSuccess?: () => void;
@@ -101,6 +110,7 @@ export function WriteAction({
   label,
   value,
   disabled,
+  unavailable,
   onBeforeSubmit,
   onSuccess,
   variant = "default",
@@ -149,14 +159,16 @@ export function WriteAction({
     [kit],
   );
 
-  const reason = blockedReason({
-    contractAddress,
-    method,
-    role,
-    requiredRole: roleForMethod(method),
-    address,
-    hasKit: kit !== null,
-  });
+  const reason =
+    unavailable ??
+    blockedReason({
+      contractAddress,
+      method,
+      role,
+      requiredRole: roleForMethod(method),
+      address,
+      hasKit: kit !== null,
+    });
   const busy = phase.name === "submitting" || phase.name === "pending" || phase.name === "switching";
   const needsWallet = !role && !address;
 
@@ -214,8 +226,7 @@ export function WriteAction({
       succeed(status.genlayerTxId);
       return;
     }
-    const message = status.statusName === "UNDETERMINED" ? UNDECIDED_MESSAGE : "The transaction did not succeed.";
-    setPhase({ name: "failed", message, hash: status.genlayerTxId });
+    setPhase({ name: "failed", message: walletOutcomeMessage(status), hash: status.genlayerTxId });
   }
 
   return (

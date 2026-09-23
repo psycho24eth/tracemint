@@ -16,6 +16,12 @@ vi.mock("@/components/WriteAction", () => ({
   },
 }));
 
+// DisputeForm reads who is acting so it can hide a dispute the contract would refuse.
+vi.mock("@/lib/demo/DemoModeProvider", () => ({ useDemoMode: () => ({ role: null, setRole: () => {} }) }));
+vi.mock("@/lib/genlayer/wallet", () => ({
+  useWallet: () => ({ address: null, provider: null, isOnCorrectNetwork: true, openModal: vi.fn(), switchNetwork: vi.fn() }),
+}));
+
 describe("DisputeForm", () => {
   beforeEach(() => cleanup());
 
