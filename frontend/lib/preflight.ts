@@ -80,7 +80,7 @@ export function imageCheck(options: { status: number; contentType: string; bytes
     };
   }
 
-  if (!truncated && bytes === 0) {
+  if (bytes === 0) {
     return {
       name: "Image URL",
       verdict: "fail",
@@ -89,11 +89,15 @@ export function imageCheck(options: { status: number; contentType: string; bytes
     };
   }
 
-  if (!truncated && bytes > MAX_IMAGE_BYTES) {
+  // The caller reads one byte past the ceiling, so a truncated read means the file is over it —
+  // guarding this on `!truncated` let an oversized file pass here and fail on chain instead.
+  if (truncated || bytes > MAX_IMAGE_BYTES) {
     return {
       name: "Image URL",
       verdict: "fail",
-      detail: `The file is ${(bytes / 1_000_000).toFixed(1)} MB, over the ${MAX_IMAGE_BYTES / 1_000_000} MB the contract accepts.`,
+      detail: truncated
+        ? `The file is larger than the ${MAX_IMAGE_BYTES / 1_000_000} MB the contract accepts.`
+        : `The file is ${(bytes / 1_000_000).toFixed(1)} MB, over the ${MAX_IMAGE_BYTES / 1_000_000} MB the contract accepts.`,
       fix: "Link a smaller copy of the same image.",
     };
   }

@@ -89,6 +89,18 @@ describe("the image check", () => {
     expect(check.detail).toMatch(/empty/i);
   });
 
+  it("fails an oversized file even when the read stopped early", () => {
+    // The route reads MAX_IMAGE_BYTES + 1; stopping at the cap is itself proof the file is too big.
+    const check = imageCheck({
+      status: 200,
+      contentType: "image/png",
+      bytes: MAX_IMAGE_BYTES + 1,
+      truncated: true,
+    });
+    expect(check.verdict).toBe("fail");
+    expect(check.detail).toMatch(/larger than the 5 MB/);
+  });
+
   it("fails a file over the contract's size ceiling", () => {
     const check = imageCheck({
       status: 200,
