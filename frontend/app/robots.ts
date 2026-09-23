@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: "*", allow: "/", disallow: ["/demo/", "/api/"] },
     ],
     sitemap: canonicalUrl("/sitemap.xml"),
-    host: canonicalUrl("/"),
+    host: canonicalUrl(),
   };
 }

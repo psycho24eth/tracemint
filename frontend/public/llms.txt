@@ -23,6 +23,11 @@ and payout is a transaction that anyone can read in the block explorer.
 
 Registering, watching and scanning are free beyond network fees. TraceMint takes 3% of a
 licence fee it collects; the creator receives 97% and withdraws directly from the contract.
+There is no subscription and no per-scan charge. The fee a site owner pays is the creator's
+own base price multiplied by what the page is for (personal 0.5x, editorial 1x, commercial 2x,
+adverts or merchandise 3x) and how prominent the copy is (incidental 0.5x, featured 1x, main
+image 1.5x) - a quarter of the base price at the low end, four and a half times it at the high
+end. Full table: https://tracemint.vercel.app/pricing
 
 ## Limits worth stating
 
@@ -33,6 +38,7 @@ agree, in which case nothing is recorded and the agent tries again on its next r
 ## Pages
 
 - Home: https://tracemint.vercel.app/
+- What it costs: https://tracemint.vercel.app/pricing
 - Questions and answers: https://tracemint.vercel.app/faq
 - Registered works: https://tracemint.vercel.app/works
 - Notices issued: https://tracemint.vercel.app/notices

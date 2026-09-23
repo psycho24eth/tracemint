@@ -12,10 +12,11 @@ import { useDemoMode } from "@/lib/demo/DemoModeProvider";
 import { JudgeModeBar } from "./JudgeModeBar";
 import { Logo } from "./Logo";
 
-const LINKS = [
+const LINKS: { href: string; label: string; tour?: string }[] = [
   { href: "/works", label: "Works", tour: "nav-works" },
   { href: "/notices", label: "Notices", tour: "nav-notices" },
   { href: "/dashboard", label: "Dashboard", tour: "nav-dashboard" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/judges", label: "Judges", tour: "nav-judges" },
 ];
 

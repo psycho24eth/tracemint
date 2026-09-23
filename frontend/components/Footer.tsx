@@ -25,6 +25,7 @@ const COLUMNS: Column[] = [
     heading: "Learn",
     links: [
       { label: "How it works", href: "/#how-it-works" },
+      { label: "What it costs", href: "/pricing" },
       { label: "Questions and answers", href: "/faq" },
       { label: "Verify in five minutes", href: "/judges" },
     ],
