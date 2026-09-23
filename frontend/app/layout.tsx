@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Anybody, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "@genlayer/transaction-kit-react/styles.css";
 import "./globals.css";
+import { canonicalUrl, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, siteStructuredData } from "@/lib/seo";
 import { Providers } from "./providers";
 
 // Anybody's width axis drives the condensed and extra-wide display type.
@@ -16,12 +17,26 @@ const serif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "TraceMint",
-  description: "An AI agent finds copies of your art, GenLayer validators judge them, and site owners settle with an on-chain license.",
+  metadataBase: new URL(canonicalUrl("/")),
+  title: { default: `${SITE_NAME} — ${SITE_TAGLINE}`, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  alternates: { canonical: "/" },
   manifest: "/site.webmanifest",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
+  openGraph: {
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+    url: canonicalUrl("/"),
+    siteName: SITE_NAME,
+    type: "website",
+    locale: "en",
+  },
+  twitter: { card: "summary_large_image", title: SITE_NAME, description: SITE_DESCRIPTION },
+  robots: { index: true, follow: true },
+  category: "technology",
 };
 
 export const viewport: Viewport = {
@@ -36,6 +51,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${display.variable} ${mono.variable} ${serif.variable}`}>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteStructuredData()) }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

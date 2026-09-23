@@ -1,0 +1,40 @@
+# TraceMint
+
+> TraceMint finds unlicensed copies of registered artwork online, has GenLayer
+> validators judge each copy against the creator's own licence terms, and lets the
+> site owner settle by paying that licence on chain. The creator keeps 97% of the fee.
+
+TraceMint runs on GenLayer Studio Next (chain 61997). Every claim, verdict, licence
+and payout is a transaction that anyone can read in the block explorer.
+
+## How it works
+
+1. A creator registers a work: the image, a portfolio URL that proves the wallet is
+   theirs, licence terms in plain words, a base price, and the pages to watch.
+2. An agent fetches those pages and compares any image it finds with the registered work.
+3. For each candidate a GenLayer leader validator reads the page and proposes a verdict.
+   Other validators repeat the work and vote. Only an agreed verdict is recorded.
+4. An agreed unlicensed copy becomes a notice with a fee, calculated from the base price,
+   how the copy is used and how prominent it is.
+5. The site owner pays the fee and receives an on-chain licence, or disputes it with a URL
+   that shows permission. A dispute is judged the same way.
+
+## What it costs
+
+Registering, watching and scanning are free beyond network fees. TraceMint takes 3% of a
+licence fee it collects; the creator receives 97% and withdraws directly from the contract.
+
+## Limits worth stating
+
+A notice is an automated finding reached by validator consensus, not legal advice, and a
+licence is a commercial settlement under terms the creator published. Validators can fail to
+agree, in which case nothing is recorded and the agent tries again on its next run.
+
+## Pages
+
+- Home: https://tracemint.vercel.app/
+- Questions and answers: https://tracemint.vercel.app/faq
+- Registered works: https://tracemint.vercel.app/works
+- Notices issued: https://tracemint.vercel.app/notices
+- Verify the whole flow in five minutes: https://tracemint.vercel.app/judges
+- Contract source: https://github.com/psycho24eth/tracemint/blob/main/contracts/license_hunter.py

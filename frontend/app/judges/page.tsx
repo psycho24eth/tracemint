@@ -6,7 +6,7 @@ import { CheckCircle2, ExternalLink } from "lucide-react";
 
 import { DemoAccessPanel } from "@/components/demo/DemoAccessPanel";
 import { PageShell } from "@/components/PageShell";
-import { DEMO_ROLE_LABELS, demoAddress } from "@/lib/demo/roles";
+import { DEMO_ROLE_LABELS, DEMO_ROLE_SUMMARY, demoAddress } from "@/lib/demo/roles";
 import { useDemoMode } from "@/lib/demo/DemoModeProvider";
 import { addressLink, siteUrl } from "@/lib/format";
 import { getContractAddress } from "@/lib/genlayer/client";
@@ -161,29 +161,45 @@ export default function JudgesPage() {
             <DemoAccessPanel className="bg-background/60" />
           </div>
         ) : (
-          <div className="flex flex-wrap items-center gap-2">
-            {(["creator", "site-owner"] as const).map((demoRole) => (
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center gap-2">
+              {(["creator", "site-owner"] as const).map((demoRole) => (
+                <button
+                  key={demoRole}
+                  type="button"
+                  onClick={() => setRole(demoRole)}
+                  disabled={!demoAddress(demoRole)}
+                  className={`border px-5 py-2.5 text-xs uppercase tracking-[0.12em] transition-colors disabled:opacity-50 ${
+                    role === demoRole
+                      ? "border-signal bg-signal text-background"
+                      : "border-line hover:border-signal hover:text-signal"
+                  }`}
+                >
+                  Act as {DEMO_ROLE_LABELS[demoRole]}
+                </button>
+              ))}
               <button
-                key={demoRole}
                 type="button"
-                onClick={() => setRole(demoRole)}
-                disabled={!demoAddress(demoRole)}
-                className={`border px-5 py-2.5 text-xs uppercase tracking-[0.12em] transition-colors disabled:opacity-50 ${
-                  role === demoRole
-                    ? "border-signal bg-signal text-background"
-                    : "border-line hover:border-signal hover:text-signal"
-                }`}
+                onClick={exit}
+                className="px-3 py-2 text-xs uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground"
               >
-                Act as {DEMO_ROLE_LABELS[demoRole]}
+                Exit demo mode
               </button>
-            ))}
-            <button
-              type="button"
-              onClick={exit}
-              className="px-3 py-2 text-xs uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground"
-            >
-              Exit demo mode
-            </button>
+            </div>
+            <dl className="grid max-w-3xl gap-px border border-line bg-[var(--line-strong)] text-sm sm:grid-cols-2">
+              {(["creator", "site-owner"] as const).map((demoRole) => (
+                <div key={demoRole} className="bg-background p-4">
+                  <dt className="t-label text-foreground">{DEMO_ROLE_LABELS[demoRole]}</dt>
+                  <dd className="mt-1 text-muted-foreground">{DEMO_ROLE_SUMMARY[demoRole]}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="max-w-3xl text-sm text-muted-foreground">
+              A licence needs both sides, so the walkthrough funds both wallets and lets you switch between them. In
+              real use nobody switches: a creator connects their own wallet, and a site owner arrives from the link in
+              the notice and pays from theirs. Demo mode exists so one person can see the whole flow without owning two
+              funded wallets.
+            </p>
           </div>
         )}
       </header>

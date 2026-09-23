@@ -10,6 +10,12 @@ export const DEMO_ROLE_LABELS: Record<DemoRole, string> = {
   "site-owner": "Demo site owner",
 };
 
+/** Who each demo role stands for, so nobody has to guess why a walkthrough offers two of them. */
+export const DEMO_ROLE_SUMMARY: Record<DemoRole, string> = {
+  creator: "The person whose art is registered. Watches pages, files claims, and withdraws earnings.",
+  "site-owner": "The person whose site used the art. Answers the notice: pays the licence, or disputes it with proof.",
+};
+
 export function demoAddress(role: DemoRole): string {
   const address =
     role === "creator" ? process.env.NEXT_PUBLIC_DEMO_CREATOR_ADDRESS : process.env.NEXT_PUBLIC_DEMO_SITE_OWNER_ADDRESS;

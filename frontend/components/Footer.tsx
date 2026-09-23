@@ -17,24 +17,21 @@ const COLUMNS: Column[] = [
     heading: "Product",
     links: [
       { label: "Registered works", href: "/works" },
-      { label: "Notices", href: "/notices" },
-      { label: "Licences", href: "/licenses" },
+      { label: "Notices issued", href: "/notices" },
       { label: "Your dashboard", href: "/dashboard" },
     ],
   },
   {
-    heading: "For creators",
+    heading: "Learn",
     links: [
-      { label: "Register a work", href: "/works" },
-      { label: "How a claim is judged", href: "/#how" },
-      { label: "Fees and payouts", href: "/dashboard" },
-      { label: "Answer a notice", href: "/notices" },
+      { label: "How it works", href: "/#how-it-works" },
+      { label: "Questions and answers", href: "/faq" },
+      { label: "Verify in five minutes", href: "/judges" },
     ],
   },
   {
     heading: "Protocol",
     links: [
-      { label: "Verify in five minutes", href: "/judges" },
       { label: "Contract source", href: `${REPO}/blob/main/contracts/license_hunter.py`, external: true },
       { label: "Source on GitHub", href: REPO, external: true },
       { label: "GenLayer docs", href: "https://docs.genlayer.com", external: true },
