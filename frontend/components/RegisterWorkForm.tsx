@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { PreflightChecks } from "@/components/register/PreflightChecks";
 import { useActingAddress } from "@/lib/demo/DemoModeProvider";
 import { formatDate, parseGen, parseWatchUrls } from "@/lib/format";
 import { Input } from "./ui/input";
@@ -66,6 +67,13 @@ export default function RegisterWorkForm() {
   const [terms, setTerms] = useState("Non-exclusive web license, 12 months");
   const [watchUrlsText, setWatchUrlsText] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [preflight, setPreflight] = useState({ checked: false, blocked: false });
+  const [override, setOverride] = useState(false);
+
+  const onPreflight = useCallback((state: { checked: boolean; blocked: boolean }) => {
+    setPreflight(state);
+    if (!state.blocked) setOverride(false);
+  }, []);
 
   const fields = { title, imageUrl, portfolioUrl, basePriceText, terms, watchUrlsText };
 
@@ -87,6 +95,8 @@ export default function RegisterWorkForm() {
     setTerms("Non-exclusive web license, 12 months");
     setWatchUrlsText("");
     setError(null);
+    setPreflight({ checked: false, blocked: false });
+    setOverride(false);
   };
 
   let basePriceWei = 0n;
@@ -111,10 +121,16 @@ export default function RegisterWorkForm() {
 
       <div className="space-y-5 p-5">
         {actingAddress && (
-          <p className="text-sm text-muted-foreground">
-            Put this address on your portfolio page so the ownership check passes:{" "}
-            <code className="break-all text-foreground">{actingAddress}</code>
-          </p>
+          <div className="space-y-2 border-l-2 border-signal pl-4 text-sm">
+            <p>
+              Put this address in the visible text of your portfolio page:{" "}
+              <code className="break-all text-signal">{actingAddress}</code>
+            </p>
+            <p className="text-muted-foreground">
+              That is how the contract proves the work is yours — it loads the page and looks for the address, so it
+              has to be a page you can edit. A stock-photo listing or someone else&apos;s gallery will not work.
+            </p>
+          </div>
         )}
 
         <div className="grid gap-5 md:grid-cols-2">
@@ -130,12 +146,18 @@ export default function RegisterWorkForm() {
 
           <div className="space-y-2">
             <Label htmlFor="imageUrl">Image URL</Label>
-            <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
+            <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…/artwork.jpg" />
+            <p className="text-xs text-muted-foreground">
+              A direct link to the image file itself, not the page it sits on.
+            </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="portfolioUrl">Portfolio URL</Label>
-            <Input id="portfolioUrl" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} placeholder="https://..." />
+            <Input id="portfolioUrl" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} placeholder="https://your-site.com/about" />
+            <p className="text-xs text-muted-foreground">
+              A page you control, showing the address above in its text.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -163,15 +185,38 @@ export default function RegisterWorkForm() {
           </div>
         </div>
 
+        <PreflightChecks
+          address={actingAddress}
+          portfolioUrl={portfolioUrl}
+          imageUrl={imageUrl}
+          onResult={onPreflight}
+        />
+
         {error && <p className="text-sm text-destructive">{error}</p>}
 
+        {/* A failed check means the contract would refuse the call, so the fee is spent for nothing. */}
         <WriteAction
           method="register_work"
           args={args}
           label="Register work"
+          unavailable={
+            preflight.blocked && !override
+              ? "The ownership check above would fail, and the contract charges a fee before refusing. Fix it and check again."
+              : null
+          }
           onBeforeSubmit={handleBeforeSubmit}
           onSuccess={handleSuccess}
         />
+
+        {preflight.blocked && !override && (
+          <button
+            type="button"
+            onClick={() => setOverride(true)}
+            className="text-xs uppercase tracking-[0.12em] text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          >
+            Register anyway — my page builds its text with JavaScript
+          </button>
+        )}
       </div>
     </section>
   );

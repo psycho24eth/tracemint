@@ -63,10 +63,12 @@ describe("RegisterWorkForm", () => {
     expect(error).toContain("At most 10");
   });
 
-  it("displays acting address in hint", () => {
+  it("says where the address has to go, and why", () => {
     vi.mocked(WriteActionModule.WriteAction).mockReturnValue(<button>Submit</button>);
     render(<RegisterWorkForm />);
-    expect(screen.getByText(/Put this address on your portfolio page/)).toBeInTheDocument();
+    expect(screen.getByText(/Put this address in the visible text of your portfolio page/)).toBeInTheDocument();
     expect(screen.getByText("0x123abc...")).toBeInTheDocument();
+    // The commonest mistake is pointing this at a page you cannot edit, such as a stock-photo listing.
+    expect(screen.getByText(/a page you can edit/)).toBeInTheDocument();
   });
 });
