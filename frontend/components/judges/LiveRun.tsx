@@ -31,6 +31,7 @@ export function LiveRun({ work }: { work: Work }) {
   const paid = filed.find((claim) => claim.status === "PAID");
   const settled = paid !== undefined;
   const owed = earnings.data ?? 0n;
+  const newest = filed.slice(-6).reverse();
 
   const steps: { key: string; title: string; state: StepState; needs?: DemoRole; body: ReactNode }[] = [
     {
@@ -68,7 +69,7 @@ export function LiveRun({ work }: { work: Work }) {
               main image; the blog credits the licence, so it is not charged at all.
             </p>
             <ul className="grid gap-px border border-[var(--line-strong)] bg-[var(--line-strong)]">
-              {filed.map((claim) => (
+              {newest.map((claim) => (
                 <li key={claim.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 bg-background px-4 py-3 text-sm">
                   <Link href={`/notices/${claim.id}`} className="t-link font-mono text-xs">
                     #{claim.id}
@@ -83,6 +84,14 @@ export function LiveRun({ work }: { work: Work }) {
                 </li>
               ))}
             </ul>
+            {filed.length > newest.length && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Newest {newest.length} of {filed.length}. Repeat scans of the same page each file their own claim.{" "}
+                <Link href="/notices" className="t-link">
+                  See every notice
+                </Link>
+              </p>
+            )}
             {notice && (
               <p className="mt-3 text-xs text-muted-foreground">
                 Notice #{notice.id}: {USAGE_LABELS[notice.usage as Usage]} use,{" "}
@@ -167,9 +176,7 @@ export function LiveRun({ work }: { work: Work }) {
   ];
 
   return (
-    <div className="space-y-6">
-      <RoleBar role={role} setRole={setRole} />
-
+    <div>
       <ol className="grid gap-px border border-[var(--line-strong)] bg-[var(--line-strong)]">
         {steps.map((step, index) => (
           <li key={step.key} className="bg-background">
@@ -238,28 +245,6 @@ function WrongRole({ needs, role, onSwitch }: { needs: DemoRole; role: DemoRole 
         Act as {DEMO_ROLE_LABELS[needs]}
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </button>
-    </div>
-  );
-}
-
-function RoleBar({ role, setRole }: { role: DemoRole | null; setRole: (role: DemoRole | null) => void }) {
-  return (
-    <div className="flex flex-wrap items-center gap-2 border border-[var(--line-strong)] p-3">
-      <span className="t-label mr-1">Acting as</span>
-      {(["creator", "site-owner"] as const).map((demoRole) => (
-        <button
-          key={demoRole}
-          type="button"
-          onClick={() => setRole(demoRole)}
-          disabled={!demoAddress(demoRole)}
-          aria-pressed={role === demoRole}
-          className={`border px-4 py-2 text-xs uppercase tracking-[0.12em] transition-colors disabled:opacity-50 ${
-            role === demoRole ? "border-signal bg-signal text-background" : "border-line hover:border-signal hover:text-signal"
-          }`}
-        >
-          {DEMO_ROLE_LABELS[demoRole]}
-        </button>
-      ))}
     </div>
   );
 }

@@ -66,7 +66,7 @@ function AccessForm() {
 }
 
 export default function JudgesPage() {
-  const { accessCode, exit } = useDemoMode();
+  const { accessCode } = useDemoMode();
   const works = useWorks();
   const contract = getContractAddress();
   const demoWork = works.data?.find((work) => work.portfolioUrl === siteUrl("/demo/portfolio"));
@@ -166,14 +166,6 @@ export default function JudgesPage() {
               Demo wallets are server-signed so you can try the flow without installing MetaMask. Fees come out of
               those demo wallets.
             </p>
-
-            <button
-              type="button"
-              onClick={exit}
-              className="px-1 text-xs uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Exit demo mode
-            </button>
           </aside>
         </div>
       )}
