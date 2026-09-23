@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TraceMint Pitch Deck</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>:root{padding:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<style>
+  /* TraceMint's own system, carried over from frontend/app/globals.css: an all-mono interface
+     with one variable-width display face doing the shouting. Committed dark — the product has
+     no light mode, so neither does its deck. Every colour is painted, nothing inherited. */
+  :root {
+    color-scheme: dark;
+
+    --ground: #0b0b0b;
+    --sheet: #111112;
+    --text: #eaeae5;
+    --muted: #9a9a95;
+    --signal: #ff5a1f;
+    --mint: #9bf0c8;
+    --alert: #ff5c7a;
+    --line: rgb(234 234 229 / 0.08);
+    --line-strong: rgb(234 234 229 / 0.18);
+
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --display: "Anybody", ui-sans-serif, system-ui, sans-serif;
+
+    --rail: 5.5rem;
+    --gutter: clamp(1rem, 4vw, 4.5rem);
+
+    scroll-snap-type: y proximity;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root { scroll-behavior: auto; scroll-snap-type: none; }
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* The site draws faint vertical rules behind everything; the deck keeps them. */
+  .rules {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: linear-gradient(90deg, var(--line) 0 1px, transparent 1px 100%);
+    background-size: 12.5% 100%;
+  }
+
+  /* ---------- slide rail ---------- */
+
+  .rail {
+    position: fixed;
+    top: env(safe-area-inset-top, 0px);
+    left: 0;
+    bottom: env(safe-area-inset-bottom, 0px);
+    width: var(--rail);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1rem;
+    border-right: 1px solid var(--line-strong);
+    background: var(--ground);
+    z-index: 20;
+  }
+
+  .rail a {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.3rem var(--gutter) 0.3rem 1.1rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 160ms ease;
+  }
+
+  .rail a::before {
+    content: "";
+    width: 1.35rem;
+    height: 1px;
+    background: var(--line-strong);
+    transition: background 160ms ease, width 160ms ease;
+  }
+
+  .rail a:hover { color: var(--text); }
+  .rail a[aria-current="true"] { color: var(--signal); }
+  .rail a[aria-current="true"]::before { background: var(--signal); width: 2.1rem; }
+  .rail a:focus-visible { outline: 1px solid var(--signal); outline-offset: 2px; }
+
+  @media (min-width: 900px) {
+    .rail { display: flex; }
+    .deck { padding-left: var(--rail); }
+  }
+
+  /* On phones the rail becomes a hairline of progress at the top. */
+  .progress {
+    position: fixed;
+    top: env(safe-area-inset-top, 0px);
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--line-strong);
+    z-index: 25;
+  }
+  .progress span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--signal);
+    transition: width 200ms linear;
+  }
+  @media (min-width: 900px) { .progress { display: none; } }
+
+  /* ---------- slides ---------- */
+
+  .deck { position: relative; z-index: 1; }
+
+  .slide {
+    min-height: 100svh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.75rem;
+    padding-inline: var(--gutter);
+    padding-block: clamp(4rem, 12vh, 7rem);
+    border-bottom: 1px solid var(--line);
+    max-width: 78rem;
+  }
+
+  .eyebrow {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .eyebrow b { color: var(--signal); font-weight: 500; }
+
+  h1, h2 {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 55;
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 0.85;
+    letter-spacing: 0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  h1 { font-size: clamp(3.4rem, 11.5vw, 9rem); }
+  h2 { font-size: clamp(2.3rem, 6.5vw, 4.6rem); }
+
+  h3 {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 140;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  p { margin: 0; max-width: 62ch; }
+  .lead { font-size: clamp(1rem, 1.5vw, 1.1875rem); line-height: 1.55; }
+  .muted { color: var(--muted); }
+  .sig { color: var(--signal); }
+  .mint { color: var(--mint); }
+
+  strong { font-weight: 700; color: var(--text); }
+
+  /* ---------- pieces ---------- */
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 2rem;
+    border-top: 1px solid var(--line-strong);
+    padding-top: 1rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .facts span { white-space: nowrap; }
+  .facts b { color: var(--text); font-weight: 500; }
+
+  .grid {
+    display: grid;
+    gap: 1px;
+    background: var(--line-strong);
+    border: 1px solid var(--line-strong);
+  }
+  .grid > * {
+    background: var(--ground);
+    padding: 1.1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .g2 { grid-template-columns: 1fr; }
+  .g3 { grid-template-columns: 1fr; }
+  .g4 { grid-template-columns: 1fr 1fr; }
+  @media (min-width: 640px) {
+    .g2 { grid-template-columns: 1fr 1fr; }
+    .g3 { grid-template-columns: repeat(3, 1fr); }
+    .g4 { grid-template-columns: repeat(4, 1fr); }
+  }
+  .grid p { font-size: 0.8125rem; color: var(--muted); max-width: none; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line-strong); }
+  table { border-collapse: collapse; width: 100%; min-width: 32rem; font-size: 0.8125rem; }
+  th, td { text-align: left; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  td:first-child { color: var(--text); white-space: nowrap; }
+  td { color: var(--muted); }
+  tr:last-child td { border-bottom: none; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* the 97 / 3 split, drawn */
+  .split { display: flex; height: 3.25rem; border: 1px solid var(--line-strong); overflow: hidden; }
+  .split-creator {
+    flex: 97;
+    display: flex;
+    align-items: center;
+    padding-inline: 0.9rem;
+    background: rgb(155 240 200 / 0.12);
+    color: var(--mint);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+  }
+  .split-protocol { flex: 3; background: var(--signal); min-width: 0.5rem; }
+
+  /* the acquisition loop */
+  .loop { margin: 0; padding: 0; border-left: 1px solid var(--line-strong); }
+  .loop li {
+    position: relative;
+    padding: 0.55rem 0 0.55rem 1.5rem;
+    font-size: 0.8125rem;
+    color: var(--muted);
+    list-style: none;
+  }
+  .loop li::before {
+    content: "";
+    position: absolute;
+    left: -3px;
+    top: 1.15rem;
+    width: 5px;
+    height: 5px;
+    background: var(--line-strong);
+  }
+  .loop li:first-child::before, .loop li:last-child::before { background: var(--signal); }
+  .loop li b { color: var(--text); font-weight: 500; }
+
+  .steps { counter-reset: s; list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; background: var(--line-strong); border: 1px solid var(--line-strong); }
+  .steps li {
+    counter-increment: s;
+    background: var(--ground);
+    padding: 1rem 1.15rem 1rem 3.4rem;
+    position: relative;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+  .steps li::before {
+    content: counter(s, decimal-leading-zero);
+    position: absolute;
+    left: 1.15rem;
+    top: 1rem;
+    color: var(--signal);
+    font-size: 0.75rem;
+  }
+  .steps li b { color: var(--text); font-weight: 500; }
+
+  .big {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 55;
+    font-weight: 900;
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    line-height: 0.85;
+    color: var(--signal);
+  }
+
+  .note {
+    border-left: 2px solid var(--signal);
+    padding: 0.2rem 0 0.2rem 1rem;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+  .note b { color: var(--text); }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--line-strong);
+    padding: 0.15rem 0.5rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    width: fit-content;
+  }
+  .chip::before { content: ""; width: 0.4rem; height: 0.4rem; border-radius: 999px; background: currentColor; }
+  .chip-sig { color: var(--signal); border-color: rgb(255 90 31 / 0.45); }
+  .chip-mint { color: var(--mint); border-color: rgb(155 240 200 / 0.4); }
+  .chip-alert { color: var(--alert); border-color: rgb(255 92 122 / 0.45); }
+
+  a.link { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--signal); }
+  a.link:hover { color: var(--signal); }
+  a:focus-visible { outline: 1px solid var(--signal); outline-offset: 2px; }
+
+  .hint {
+    position: fixed;
+    right: var(--gutter);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+    font-size: 0.625rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    z-index: 20;
+    background: var(--ground);
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--line);
+  }
+  @media (max-width: 899px) { .hint { display: none; } }
+
+  .mark { display: flex; align-items: center; gap: 0.7rem; }
+  .cube { width: 1.75rem; height: 1.75rem; flex: none; }
+  .wordmark {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 140;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    font-size: 1rem;
+  }
+  .wordmark i { color: var(--signal); font-style: normal; }
+</style>
+
+<div class="rules" aria-hidden="true"></div>
+
+<div class="progress" aria-hidden="true"><span id="bar"></span></div>
+
+<nav class="rail" aria-label="Slides">
+  <a href="#s1">Thesis</a>
+  <a href="#s2">Problem</a>
+  <a href="#s3">Gap</a>
+  <a href="#s4">Product</a>
+  <a href="#s5">GenLayer</a>
+  <a href="#s6">Proof</a>
+  <a href="#s7">Model</a>
+  <a href="#s8">Unknown</a>
+  <a href="#s9">Growth</a>
+  <a href="#s10">Search</a>
+  <a href="#s11">Roadmap</a>
+  <a href="#s12">Risks</a>
+</nav>
+
+<main class="deck">
+
+  <!-- 01 -->
+  <section class="slide" id="s1">
+    <div class="mark">
+      <svg class="cube" viewBox="0 0 32 32" role="img" aria-label="TraceMint">
+        <rect x="1" y="1" width="30" height="30" fill="#ff5a1f"></rect>
+        <g fill="none" stroke="#0b0b0b" stroke-width="2.4" stroke-linecap="square">
+          <path d="M6 11V6h5M21 6h5v5M26 21v5h-5M11 26H6v-5"></path>
+        </g>
+        <circle cx="16" cy="16" r="2.6" fill="#0b0b0b"></circle>
+      </svg>
+      <span class="wordmark">Tracemint<i>/</i></span>
+    </div>
+
+    <h1>Turn a stolen<br>image into<br>a licence sale</h1>
+
+    <p class="lead">
+      An agent finds copies of registered artwork online. GenLayer validators judge each copy against terms the
+      creator published in advance. The site owner settles with an on-chain licence — or disputes it with proof.
+      The creator keeps 97%.
+    </p>
+
+    <div class="facts">
+      <span>Live <b>tracemint.vercel.app</b></span>
+      <span>Network <b>GenLayer Studio Next · 61997</b></span>
+      <span>Contract <b>0xA722…A5Dd</b></span>
+      <span>Status <b>Testnet, no paying users</b></span>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="slide" id="s2">
+    <p class="eyebrow"><b>02</b> The problem</p>
+    <h2>Every option<br>is worse than<br>doing nothing</h2>
+    <p class="muted">
+      An illustrator finds their work on a shop page months later. Here is what they can actually do about it today.
+    </p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Option</th><th scope="col">What happens</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Do nothing</td><td>What most people choose. It is the default.</td></tr>
+          <tr><td>Send an email</td><td>Ignored more often than not. No leverage behind it.</td></tr>
+          <tr><td>DMCA takedown</td><td>The image comes down. Nobody gets paid. The use is erased, not licensed.</td></tr>
+          <tr><td>Recovery agency</td><td>They collect, and keep 30–50% of it. Slow, adversarial, minimum case sizes.</td></tr>
+          <tr><td>Hire a lawyer</td><td>Costs more than the licence is worth below roughly four figures.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      <b>To verify before quoting:</b> published commission rates for Pixsy, Copytrack, ImageRights and PicRights.
+      The 30–50% band is from their public pages and has not been re-checked for this deck.
+    </p>
+  </section>
+
+  <!-- 03 -->
+  <section class="slide" id="s3">
+    <p class="eyebrow"><b>03</b> The gap</p>
+    <h2>The small claim<br>goes uncollected</h2>
+    <p class="lead">
+      A £40 licence is not worth a lawyer, not worth an agency's minimum, and not worth an argument. So it is
+      dropped — and the site owner, who would often have paid £40 up front if anyone had asked, ends up an
+      infringer by accident.
+    </p>
+    <div class="grid g2">
+      <div>
+        <span class="chip chip-mint">Creator</span>
+        <h3>Wants the money, not a fight</h3>
+        <p>Has a price in mind. Has a folder of screenshots. Has no appetite for confrontation and no budget for one.</p>
+      </div>
+      <div>
+        <span class="chip chip-sig">Site owner</span>
+        <h3>Wants this to go away cheaply</h3>
+        <p>Usually did not set out to steal anything. Faced with a demand letter they either panic or ignore it.</p>
+      </div>
+    </div>
+    <p class="muted">There are two customers in that problem, not one. Most tools in this space only serve the first.</p>
+  </section>
+
+  <!-- 04 -->
+  <section class="slide" id="s4">
+    <p class="eyebrow"><b>04</b> What we built</p>
+    <h2>A settlement rail<br>both sides<br>can check</h2>
+    <ol class="steps">
+      <li><b>Register.</b> The image, a portfolio URL that proves the wallet is yours, terms in plain words, a base price, and the pages to watch.</li>
+      <li><b>Scan.</b> An agent fetches those pages and compares any image it finds with the registered work.</li>
+      <li><b>Judge.</b> A leader validator reads the page and proposes a verdict. Other validators repeat the work and vote. Only an agreed verdict is recorded.</li>
+      <li><b>Notice.</b> An agreed unlicensed copy becomes a notice with the fee already calculated from the base price, the usage and the prominence.</li>
+      <li><b>Settle.</b> The site owner pays and holds an on-chain licence, or disputes with a URL showing permission. A dispute is judged the same way.</li>
+    </ol>
+    <p class="muted">Registering, watching and scanning are free. Nobody writes an email at any point.</p>
+  </section>
+
+  <!-- 05 -->
+  <section class="slide" id="s5">
+    <p class="eyebrow"><b>05</b> Why GenLayer</p>
+    <h2>The verdict<br>is the product</h2>
+    <p class="lead">
+      One question decides whether this business exists: <span class="sig">why would a site owner voluntarily pay a
+      notice generated by a robot?</span>
+    </p>
+    <div class="grid g2">
+      <div>
+        <span class="chip chip-alert">On our own server</span>
+        <h3>They wouldn't</h3>
+        <p>
+          It is one company's opinion about their page, produced by a model they cannot inspect, with a bill
+          attached. Indistinguishable from a scam — which is exactly why automated copyright notices have a bad name.
+        </p>
+      </div>
+      <div>
+        <span class="chip chip-mint">On GenLayer</span>
+        <h3>Independent parties agreed</h3>
+        <p>
+          Validators each read the live page, weigh it against terms published before the scan, and vote. The agreed
+          verdict and its reasoning are a transaction anyone can open in the explorer.
+        </p>
+      </div>
+    </div>
+    <p class="muted">
+      Ethereum can hold the money and the terms but cannot read a page or weigh <em>is this the same picture</em>.
+      A centralised AI service can read the page but cannot make its judgement checkable. GenLayer's consensus over
+      non-deterministic work is the only piece that makes an AI verdict something a stranger can rely on — and
+      “a stranger can rely on it” is the whole product.
+    </p>
+  </section>
+
+  <!-- 06 -->
+  <section class="slide" id="s6">
+    <p class="eyebrow"><b>06</b> Proof</p>
+    <h2>Working, on chain,<br>checkable in<br>five minutes</h2>
+    <div class="grid g3">
+      <div><h3 class="mint">Shipped</h3><p>Works register. The agent scans. Validators agree. Notices issue. Licences settle. Earnings withdraw. Disputes resolve.</p></div>
+      <div><h3 class="mint">Verifiable</h3><p>Every step is a transaction with a link to the GenLayer explorer. The walkthrough at <span class="sig">/judges</span> funds both sides and runs the whole flow.</p></div>
+      <div><h3 class="mint">Honest about state</h3><p>Testnet. Test GEN is free from the faucet in the app. No paying users, and no revenue yet.</p></div>
+    </div>
+    <p class="note">
+      <b>What is deliberately not claimed:</b> a notice is an automated finding reached by validator consensus,
+      not a legal claim. It has no jurisdiction and no court behind it. Payment is voluntary. What it has is a
+      cheap, checkable, low-conflict path to settling something that would otherwise be dropped.
+    </p>
+  </section>
+
+  <!-- 07 -->
+  <section class="slide" id="s7">
+    <p class="eyebrow"><b>07</b> Revenue</p>
+    <h2>Price the cost,<br>keep the<br>settlement cheap</h2>
+
+    <div class="split" role="img" aria-label="97% of every licence fee goes to the creator, 3% to the protocol">
+      <div class="split-creator">97% CREATOR</div>
+      <div class="split-protocol"></div>
+    </div>
+    <p class="muted">
+      The 3% is written into the contract, not into a price list. But 3% of a $50 licence is
+      <span class="sig">$1.50</span> — and the cost driver is scanning, not settling. Expense scales with pages
+      watched; revenue scales with licences settled. Those are not the same number.
+    </p>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Line</th><th scope="col">What it prices</th><th scope="col">State</th></tr></thead>
+        <tbody>
+          <tr><td>Protocol fee — 3%</td><td>The rail and the on-chain record. Near-zero marginal cost, kept low so settling beats arguing.</td><td class="mint">Shipped</td></tr>
+          <tr><td>Monitoring tiers</td><td>Pages watched × scan frequency. This is the real expense, so this is the real subscription.</td><td>Phase 2</td></tr>
+          <tr><td>Portfolio &amp; agency</td><td>Bulk works, API access, priority scans, reporting. Same need, different scale.</td><td>Phase 3</td></tr>
+          <tr><td>Licence up front</td><td>A site owner buys at the creator's published price before publishing. 5–10%, because it is a sale, not a recovery.</td><td>Phase 2</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">Enforcement is the wedge. Licensing is the market.</p>
+  </section>
+
+  <!-- 08 -->
+  <section class="slide" id="s8">
+    <p class="eyebrow"><b>08</b> The unknown</p>
+    <h2>One number<br>decides all of it</h2>
+    <p class="big">Cost per page,<br>per scan</p>
+    <p class="lead">
+      Validator count × model call × web fetch, on real economics. Nobody knows it, because the product has only
+      ever run where GEN is free.
+    </p>
+    <div class="grid g2">
+      <div>
+        <h3>Why we are saying so</h3>
+        <p>
+          Every projection in this deck is arithmetic on that guess. Measuring it is the first job after this
+          hackathon, and an investor will find it before we do if we do not lead with it.
+        </p>
+      </div>
+      <div>
+        <h3>If it comes back high</h3>
+        <p>
+          Scheduled instead of continuous scanning, many images per page fetch, a cheap first pass with validators
+          only on candidates, and monitoring becomes enterprise while the free tier becomes a one-off scan.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section class="slide" id="s9">
+    <p class="eyebrow"><b>09</b> Acquisition</p>
+    <h2>The notice<br>is the<br>marketing</h2>
+    <p class="muted">Every notice is a product demo delivered to the exact person who needs a licence.</p>
+
+    <ul class="loop">
+      <li><b>A creator registers a work</b> — their own self-interest funds the distribution.</li>
+      <li>The agent finds a copy. Validators agree.</li>
+      <li><b>The notice link reaches the site owner</b> — the buyer side, reached at zero cost.</li>
+      <li>They read a verdict they can check and pay instead of arguing.</li>
+      <li>They now know this exists, and that their other pages are exposed.</li>
+      <li><b>Next time they license up front.</b> Some of them own work too.</li>
+      <li>The creator gets paid, and tells other creators.</li>
+    </ul>
+
+    <div class="grid g2">
+      <div>
+        <h3 class="sig">The way in: a free scan</h3>
+        <p>
+          Paste your portfolio URL, get a report of where your images appear. No wallet, no signup. A creator who
+          sees four real copies of their work needs no further persuading — and the screenshot travels.
+        </p>
+      </div>
+      <div>
+        <h3>First channels, in order</h3>
+        <p>
+          The threads where the complaint already happens — r/photography, r/Illustration, ArtStation, illustration
+          Discords — answered by running the free scan in public. Then creator-economy newsletters, then site owners
+          who have already paid one notice, then the GenLayer ecosystem.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide" id="s10">
+    <p class="eyebrow"><b>10</b> Search &amp; answer engines</p>
+    <h2>Own the query<br>nobody wants<br>to answer</h2>
+
+    <div class="grid g2">
+      <div>
+        <span class="chip chip-mint">Creators, before they know we exist</span>
+        <p>
+          “someone used my photo without permission” · “found my art on a website what can I do” · “how much should
+          I charge for image licensing”
+        </p>
+      </div>
+      <div>
+        <span class="chip chip-sig">Site owners, after a notice lands</span>
+        <p>
+          “received a copyright notice for an image on my site” · “is this notice legitimate” · “do I have to pay an
+          image licence demand”
+        </p>
+      </div>
+    </div>
+
+    <p class="muted">
+      The second cluster is the one to win. High intent, almost no competition, and the honest answer — here is what
+      this is, here is what it is <em>not</em>, here is how to check it yourself — is a page nobody selling
+      enforcement wants to write. It does more for trust than any marketing copy.
+    </p>
+
+    <div class="grid g3">
+      <div><h3 class="mint">Already shipped</h3><p>Pricing and FAQ pages, llms.txt, robots, sitemap, WebSite / SoftwareApplication / FAQPage / Service schema, one canonical origin, per-route metadata, an OG image. Notice pages are noindex on purpose.</p></div>
+      <div><h3>Next, in order</h3><p>Buy the real domain — a vercel.app subdomain will not rank and reads as temporary. Then a licence-fee calculator, an “I received a notice” explainer, and a glossary.</p></div>
+      <div><h3>How to be quotable</h3><p>One source for every fact, stated in full sentences with the number in them. “3% of a licence fee; the creator receives 97%” survives being quoted. “Industry-leading low fees” does not.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide" id="s11">
+    <p class="eyebrow"><b>11</b> Roadmap</p>
+    <h2>Measure, then<br>build the<br>subscription</h2>
+
+    <div class="grid g3">
+      <div>
+        <span class="chip chip-mint">Phase 0 · done</span>
+        <h3>Prove the mechanism</h3>
+        <p>The full flow works on chain and a stranger can verify it in five minutes.</p>
+      </div>
+      <div>
+        <span class="chip chip-sig">Phase 1 · 3 months</span>
+        <h3>Find out what it costs</h3>
+        <p>
+          Measure cost per scan. Ship the free portfolio report. Get 50 creators registering real work. Measure
+          copies found, false positives and settle rate. Buy the domain.
+        </p>
+      </div>
+      <div>
+        <span class="chip">Phase 2–3 · 3–12 months</span>
+        <h3>Licensing, then the rail</h3>
+        <p>
+          Monitoring tiers priced from the measured cost. Buy-a-licence-first. A CMS check before publishing. Then
+          an API other platforms build on.
+        </p>
+      </div>
+    </div>
+
+    <p class="note">
+      <b>Kill criterion, stated up front:</b> if fewer than roughly one in ten notices settle, the
+      voluntary-payment premise is wrong and this has to become something else. Better to learn that in month three
+      than in year two. Nothing in Phase 2 starts before the cost number and the settle rate exist.
+    </p>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide" id="s12">
+    <p class="eyebrow"><b>12</b> Risks &amp; what we track</p>
+    <h2>What would<br>kill this</h2>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Risk</th><th scope="col">What reduces it</th></tr></thead>
+        <tbody>
+          <tr><td>Scan cost &gt; what monitoring can charge</td><td>Measure first. Batch pages, cheap first pass, scheduled scans.</td></tr>
+          <tr><td>False positives</td><td>One wrong notice costs more than ten right ones earn. Consensus threshold, a free dispute path that already works, human review at low confidence.</td></tr>
+          <tr><td>Read as a copyright troll</td><td>Licence-first positioning, calm cheap notices, never a second notice to someone who paid, no legal threats we cannot make.</td></tr>
+          <tr><td>Notices simply ignored</td><td>Make paying cheaper and easier than thinking about it. Settle rate is the top-line metric.</td></tr>
+          <tr><td>Creators do not care enough to register</td><td>The free scan shows them the problem before asking for anything.</td></tr>
+          <tr><td>Single-network dependency</td><td>Stay close to the GenLayer ecosystem; keep the agent and contract boundaries clean.</td></tr>
+          <tr><td>Legal exposure from automated accusations</td><td>Findings, not claims — said on every page. Notice details noindex. Removal on request.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid g3">
+      <div><h3 class="sig">Six numbers, not signups</h3><p class="num">Cost per page per scan · copies found per portfolio · false-positive rate · notice settle rate · days from notice to payment · repeat registrations per creator.</p></div>
+      <div><h3>The ask</h3><p>Runway to measure real scan economics on GenLayer, and introductions to twenty working illustrators who will register real work and tell us what they charge.</p></div>
+      <div>
+        <h3>See it running</h3>
+        <p>
+          <a class="link" href="https://tracemint.vercel.app">tracemint.vercel.app</a><br>
+          <a class="link" href="https://tracemint.vercel.app/pricing">/pricing</a> — the numbers<br>
+          <a class="link" href="https://github.com/psycho24eth/tracemint">github.com/psycho24eth/tracemint</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="facts">
+      <span>Contract <b>0xA7225195035c80Fc6E9128112947B9bF87c7A5Dd</b></span>
+      <span>Chain <b>61997</b></span>
+    </div>
+  </section>
+
+</main>
+
+<p class="hint" aria-hidden="true">↑ ↓ to move</p>
+
+<script>
+  (function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+    var links = Array.prototype.slice.call(document.querySelectorAll(".rail a"));
+    var bar = document.getElementById("bar");
+
+    function mark(index) {
+      links.forEach(function (link, i) {
+        if (i === index) link.setAttribute("aria-current", "true");
+        else link.removeAttribute("aria-current");
+      });
+      if (bar) bar.style.width = ((index + 1) / slides.length) * 100 + "%";
+    }
+
+    mark(0);
+
+    if (typeof IntersectionObserver !== "undefined") {
+      var observer = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) mark(slides.indexOf(entry.target));
+          });
+        },
+        // Fires when a slide crosses the middle of the viewport, so the rail tracks what you are reading.
+        { rootMargin: "-45% 0px -45% 0px" }
+      );
+      slides.forEach(function (slide) {
+        observer.observe(slide);
+      });
+    }
+
+    function current() {
+      var middle = window.innerHeight / 2;
+      for (var i = 0; i < slides.length; i += 1) {
+        var box = slides[i].getBoundingClientRect();
+        if (box.top <= middle && box.bottom > middle) return i;
+      }
+      return 0;
+    }
+
+    function go(step) {
+      var next = Math.min(slides.length - 1, Math.max(0, current() + step));
+      slides[next].scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      var key = event.key;
+      if (key === "ArrowDown" || key === "PageDown" || key === "j") {
+        event.preventDefault();
+        go(1);
+      } else if (key === "ArrowUp" || key === "PageUp" || key === "k") {
+        event.preventDefault();
+        go(-1);
+      } else if (key === "Home") {
+        event.preventDefault();
+        slides[0].scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (key === "End") {
+        event.preventDefault();
+        slides[slides.length - 1].scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>
