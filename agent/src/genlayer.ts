@@ -22,6 +22,63 @@ export function clientFor(privateKey: Hex) {
 
 export type StudioClient = ReturnType<typeof clientFor>;
 
+/**
+ * Studio refuses work when its execution slots are full, and says how long to wait:
+ *
+ *   code: -32006, message: "Server busy: all 8 execution slots occupied, retry later",
+ *   data: { retry_after_seconds: 2 }
+ *
+ * viem has no entry for -32006, so it surfaces this as JsonRpcVersionUnsupportedError — "Version of
+ * JSON-RPC protocol is not supported" — and the real reason only appears on `details` and `cause`.
+ * That is why the code, the message and the whole cause chain all get checked: a two-second queue
+ * used to end a scheduled scan with a stack trace blaming the protocol version.
+ */
+const RETRYABLE_RPC_CODES = new Set([-32005, -32006]);
+const RETRYABLE_RPC_TEXT = /server busy|execution slots|retry later|rate limit|too many requests|limit exceeded/i;
+const DEFAULT_RETRY_MS = 2_000;
+const MAX_RETRY_MS = 30_000;
+
+export const RPC_RETRIES = Number(process.env.GENLAYER_RPC_RETRIES ?? "5");
+
+/** The server's own wait in milliseconds, or null when the error is not worth retrying. */
+export function retryableRpcError(error: unknown): { retryAfterMs: number; reason: string } | null {
+  for (let node: unknown = error, depth = 0; node && depth < 5; depth += 1) {
+    const it = node as Record<string, unknown>;
+    const text = [it.details, it.shortMessage, it.message].filter((part) => typeof part === "string").join(" ");
+    const seconds = (it.data as { retry_after_seconds?: unknown } | undefined)?.retry_after_seconds;
+
+    if (RETRYABLE_RPC_CODES.has(Number(it.code)) || RETRYABLE_RPC_TEXT.test(text)) {
+      return {
+        retryAfterMs: typeof seconds === "number" && seconds > 0 ? seconds * 1_000 : DEFAULT_RETRY_MS,
+        reason: (typeof it.details === "string" && it.details) || text || "the RPC asked us to retry",
+      };
+    }
+    node = it.cause;
+  }
+  return null;
+}
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Retries a chain call while Studio says it is busy. Safe for writes as well as reads: a busy
+ * refusal means the transaction was never accepted, and `file_claim` is idempotent on chain anyway
+ * because claim_keys rejects a duplicate.
+ */
+export async function withRpcRetry<T>(label: string, call: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await call();
+    } catch (error) {
+      const retry = retryableRpcError(error);
+      if (!retry || attempt >= RPC_RETRIES) throw error;
+      const wait = Math.min(retry.retryAfterMs * 2 ** attempt, MAX_RETRY_MS);
+      console.warn(`${label}: ${retry.reason}. Retrying in ${wait}ms (${attempt + 1}/${RPC_RETRIES}).`);
+      await sleep(wait);
+    }
+  }
+}
+
 export async function rpc<T>(method: string, paramsJson: string): Promise<T> {
   // Built by hand so wei amounts above 2^53 reach the server as exact JSON integers.
   const response = await fetch(RPC_URL, {
@@ -111,16 +168,20 @@ export async function submitWrite(
 ): Promise<Hex> {
   const preset = options.fees ?? LIGHT_FEES;
   const value = options.value ?? 0n;
-  const fees = options.emitsMessages
-    ? await quoteMessageFees(client, preset, { address, functionName, args, value })
-    : await quoteFees(client, preset);
-  return (await client.writeContract({
-    address: address as Hex,
-    functionName,
-    args: args as never,
-    value,
-    fees: fees as never,
-  })) as Hex;
+  const fees = await withRpcRetry(`quote ${functionName}`, () =>
+    options.emitsMessages
+      ? quoteMessageFees(client, preset, { address, functionName, args, value })
+      : quoteFees(client, preset),
+  );
+  return (await withRpcRetry(`submit ${functionName}`, () =>
+    client.writeContract({
+      address: address as Hex,
+      functionName,
+      args: args as never,
+      value,
+      fees: fees as never,
+    }),
+  )) as Hex;
 }
 
 export async function write(
@@ -144,7 +205,11 @@ export function toPlain(value: unknown): unknown {
 }
 
 export async function read(client: StudioClient, address: string, functionName: string, args: unknown[] = []) {
-  return toPlain(await client.readContract({ address: address as Hex, functionName, args: args as never }));
+  return toPlain(
+    await withRpcRetry(`read ${functionName}`, () =>
+      client.readContract({ address: address as Hex, functionName, args: args as never }),
+    ),
+  );
 }
 
 export { createAccount, generatePrivateKey };

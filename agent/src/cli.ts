@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { createLicenseHunterClient } from "./contract";
-import { json, type Hex } from "./genlayer";
+import { json, retryableRpcError, RPC_RETRIES, type Hex } from "./genlayer";
 import { runScan } from "./scan";
 
 const envFile = fileURLToPath(new URL("../../.env.local", import.meta.url));
@@ -16,10 +16,31 @@ if (!privateKey || !address) {
 }
 
 const client = createLicenseHunterClient({ privateKey: privateKey as Hex, address });
-const summary = await runScan(client, { wait: true });
 
-console.log(json({ filed: summary.filed, skipped: summary.skipped.length, errors: summary.errors }));
+let summary;
+try {
+  summary = await runScan(client, { wait: true });
+} catch (error) {
+  // withRpcRetry already waited out a busy Studio, so reaching here means the chain stayed
+  // unreachable. Still exit 1 -- a scheduled scan that never runs should be visible -- but print the
+  // reason on one line, because the raw viem stack blames the JSON-RPC version for a busy server.
+  const retryable = retryableRpcError(error);
+  const reason = retryable ? `${retryable.reason} (gave up after ${RPC_RETRIES} retries)` : (error as Error).message;
+  console.error(`Scan failed: ${reason}`);
+  process.exit(1);
+}
+
 console.log(
-  `scanned ${summary.worksScanned} works, found ${summary.candidates.length} candidates, ` +
-    `filed ${summary.filed.length} claims, ${summary.errors.length} errors`,
+  json({
+    filed: summary.filed,
+    skipped: summary.skipped.length,
+    errors: summary.errors,
+    examined: summary.examined,
+    pagesRead: summary.pagesRead,
+  }),
+);
+console.log(
+  `scanned ${summary.worksScanned} works, read ${summary.pagesRead} pages, compared ${summary.examined} images, ` +
+    `found ${summary.candidates.length} candidates, filed ${summary.filed.length} claims, ` +
+    `${summary.errors.length} errors`,
 );
