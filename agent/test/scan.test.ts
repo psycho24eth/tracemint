@@ -112,4 +112,14 @@ describe("runScan", () => {
     expect(summary.worksScanned).toBe(1);
     expect(filed.map((claim) => claim.workId)).toEqual([2]);
   });
+
+  it("totals the images and pages looked at across every work in the run", async () => {
+    const { client } = fakeClient([work(1), work(2)]);
+
+    const summary = await runScan(client, { fetchFn: await pageWithCopies(3) });
+
+    // Two works, one watched page each, three images on it.
+    expect(summary.pagesRead).toBe(2);
+    expect(summary.examined).toBe(6);
+  });
 });

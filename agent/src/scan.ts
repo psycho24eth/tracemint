@@ -12,7 +12,15 @@ export function claimKey(workId: number, pageUrl: string, imageUrl: string): str
 export async function runScan(client: LicenseHunterClient, options: ScanOptions = {}): Promise<ScanSummary> {
   const maxClaims = options.maxClaims ?? MAX_CLAIMS_PER_RUN;
   const wait = options.wait ?? true;
-  const summary: ScanSummary = { worksScanned: 0, candidates: [], filed: [], skipped: [], errors: [] };
+  const summary: ScanSummary = {
+    worksScanned: 0,
+    candidates: [],
+    filed: [],
+    skipped: [],
+    errors: [],
+    examined: 0,
+    pagesRead: 0,
+  };
 
   const works = (await client.listWorks()).filter((work) => !options.workIds || options.workIds.includes(work.id));
   for (const work of works) {
@@ -20,8 +28,10 @@ export async function runScan(client: LicenseHunterClient, options: ScanOptions 
     const known = new Set(
       (await client.listClaims(work.id)).map((claim) => claimKey(claim.workId, claim.pageUrl, claim.imageUrl)),
     );
-    const { candidates, errors } = await findCandidates(work, options);
+    const { candidates, errors, examined, pagesRead } = await findCandidates(work, options);
     summary.errors.push(...errors);
+    summary.examined += examined;
+    summary.pagesRead += pagesRead;
 
     for (const candidate of candidates) {
       summary.candidates.push(candidate);

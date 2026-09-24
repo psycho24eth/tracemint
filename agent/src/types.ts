@@ -37,6 +37,10 @@ export type ScanSummary = {
   filed: FiledClaim[];
   skipped: Candidate[];
   errors: string[];
+  /** Images fetched and compared, across every work in the run. */
+  examined: number;
+  /** Watched pages whose HTML was read, across every work in the run. */
+  pagesRead: number;
 };
 
 export interface LicenseHunterClient {

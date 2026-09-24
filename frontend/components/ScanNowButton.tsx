@@ -25,9 +25,27 @@ const STILL_WAITING: ClaimOutcome = { text: STILL_WAITING_MESSAGE, verdict: "unk
 
 const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+/**
+ * What the scan did, in words. Matching nothing is the ordinary outcome — most watched pages are
+ * clean — so the message has to name the work that was done. "Checked 0 candidate images and filed
+ * 0 claims" counted matches, not images, and so read as a broken agent rather than an honest result.
+ */
+export function scanSummary(result: { examined: number; pagesRead: number; candidates: number; filed: number }): string {
+  const { examined, pagesRead, candidates, filed } = result;
+  const pages = `${pagesRead} page${pagesRead === 1 ? "" : "s"}`;
+  const images = `${examined} image${examined === 1 ? "" : "s"}`;
+
+  if (pagesRead === 0) return "No watched page could be read. Check the addresses below, or add one.";
+  if (examined === 0) return `Read ${pages} and found no images on ${pagesRead === 1 ? "it" : "them"}.`;
+  if (candidates === 0) return `Compared ${images} across ${pages}. None was close enough to your work to claim.`;
+  if (filed === 0) return `Matched ${candidates} of ${images} across ${pages}, all already claimed.`;
+  return `Compared ${images} across ${pages}, matched ${candidates}, and filed ${filed} claim${filed === 1 ? "" : "s"}.`;
+}
+
 export default function ScanNowButton({ workId, useRunId }: { workId: number; useRunId: boolean }) {
   const [state, setState] = useState<ScanState>("idle");
   const [candidates, setCandidates] = useState(0);
+  const [looked, setLooked] = useState({ examined: 0, pagesRead: 0 });
   const [filed, setFiled] = useState<FiledClaim[]>([]);
   const [outcomes, setOutcomes] = useState<Record<string, ClaimOutcome>>({});
   const [stages, setStages] = useState<Record<string, Progress>>({});
@@ -88,6 +106,7 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
     setOutcomes({});
     setStages({});
     setBatch(null);
+    setLooked({ examined: 0, pagesRead: 0 });
 
     try {
       const body: { workId: number; runId?: string } = { workId };
@@ -110,6 +129,7 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
 
       const data = await response.json();
       setCandidates(data.candidates);
+      setLooked({ examined: data.examined ?? 0, pagesRead: data.pagesRead ?? 0 });
       setFiled(data.filed);
       setSkipped(data.skipped);
       setErrors(data.errors || []);
@@ -127,8 +147,14 @@ export default function ScanNowButton({ workId, useRunId }: { workId: number; us
     return (
       <div className="space-y-3">
         <p className="font-semibold">
-          Checked {candidates} candidate image{candidates !== 1 ? "s" : ""} and filed {filed.length} claim{filed.length !== 1 ? "s" : ""}
+          {scanSummary({ ...looked, candidates, filed: filed.length })}
         </p>
+        {candidates === 0 && looked.examined > 0 && (
+          <p className="text-sm text-muted-foreground">
+            That is the normal result for a page that has not copied your work. Nothing was charged, and you can scan
+            again whenever you add a page.
+          </p>
+        )}
         {filed.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-medium">Filed claims:</p>

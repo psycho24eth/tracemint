@@ -51,6 +51,9 @@ export async function POST(request: Request) {
     return Response.json({
       worksScanned: found.worksScanned,
       candidates: found.candidates.length,
+      // What the scan actually did, so a run that matches nothing can say so instead of reading as a failure.
+      examined: found.examined,
+      pagesRead: found.pagesRead,
       filed: found.filed.map((claim) => ({
         hash: claim.txHash,
         pageUrl: claim.pageUrl,

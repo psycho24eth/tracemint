@@ -38,6 +38,8 @@ const summary = (overrides: Record<string, unknown> = {}) => ({
   ],
   skipped: [],
   errors: [],
+  examined: 4,
+  pagesRead: 2,
   ...overrides,
 });
 
@@ -81,6 +83,9 @@ describe("POST /api/scan", () => {
       ],
       skipped: 0,
       errors: [],
+      // Passed through so a scan that matches nothing can still say what it looked at.
+      examined: 4,
+      pagesRead: 2,
     });
     expect(mocks.createLicenseHunterClient).toHaveBeenCalledWith({ privateKey: "0xagent-key", address: CONTRACT });
     expect(mocks.runScan).toHaveBeenCalledWith({ agent: true }, { wait: false, runId: "r1", workIds: [1] });

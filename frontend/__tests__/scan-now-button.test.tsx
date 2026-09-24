@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
-import ScanNowButton from "@/components/ScanNowButton";
+import ScanNowButton, { scanSummary } from "@/components/ScanNowButton";
 import { UNDECIDED_MESSAGE } from "@/lib/tx";
 
 const { refreshMock } = vi.hoisted(() => ({ refreshMock: vi.fn() }));
@@ -30,6 +30,8 @@ describe("ScanNowButton", () => {
       ok: true,
       json: async () => ({
         candidates: 10,
+        examined: 12,
+        pagesRead: 3,
         filed: [
           {
             hash: "0xabc123",
@@ -60,7 +62,7 @@ describe("ScanNowButton", () => {
     expect(runId).toMatch(/^[a-z0-9-]{1,32}$/i);
 
     await waitFor(() => {
-      expect(screen.getByText(/Checked 10 candidate image/)).toBeInTheDocument();
+      expect(screen.getByText("Compared 12 images across 3 pages, matched 10, and filed 1 claim.")).toBeInTheDocument();
     });
   });
 
@@ -234,5 +236,52 @@ describe("ScanNowButton", () => {
     await waitFor(() => {
       expect(screen.queryByText("Scanning…")).not.toBeInTheDocument();
     });
+  });
+
+  it("explains a scan that matched nothing instead of reporting a bare zero", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ candidates: 0, examined: 2, pagesRead: 2, filed: [], skipped: 0, errors: [] }),
+    });
+
+    render(<ScanNowButton workId={1} useRunId={false} />);
+    await userEvent.setup().click(screen.getByText("Scan now"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Compared 2 images across 2 pages. None was close enough to your work to claim."),
+      ).toBeInTheDocument();
+    });
+    // Without this, a clean watchlist is indistinguishable from a broken agent.
+    expect(screen.getByText(/the normal result for a page that has not copied your work/)).toBeInTheDocument();
+  });
+});
+
+describe("scanSummary", () => {
+  it("names the images and pages when something matched", () => {
+    expect(scanSummary({ examined: 12, pagesRead: 3, candidates: 2, filed: 2 })).toBe(
+      "Compared 12 images across 3 pages, matched 2, and filed 2 claims.",
+    );
+  });
+
+  it("says what was compared when nothing matched", () => {
+    expect(scanSummary({ examined: 2, pagesRead: 2, candidates: 0, filed: 0 })).toBe(
+      "Compared 2 images across 2 pages. None was close enough to your work to claim.",
+    );
+  });
+
+  it("separates a page with no images from a page that could not be read", () => {
+    expect(scanSummary({ examined: 0, pagesRead: 1, candidates: 0, filed: 0 })).toBe(
+      "Read 1 page and found no images on it.",
+    );
+    expect(scanSummary({ examined: 0, pagesRead: 0, candidates: 0, filed: 0 })).toBe(
+      "No watched page could be read. Check the addresses below, or add one.",
+    );
+  });
+
+  it("says so when every match was already claimed, since re-scanning files nothing", () => {
+    expect(scanSummary({ examined: 4, pagesRead: 1, candidates: 1, filed: 0 })).toBe(
+      "Matched 1 of 4 images across 1 page, all already claimed.",
+    );
   });
 });
