@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useState } from "react";
 
 import { PreflightChecks } from "@/components/register/PreflightChecks";
@@ -127,11 +128,20 @@ export default function RegisterWorkForm() {
               <code className="break-all text-signal">{actingAddress}</code>
             </p>
             <p className="text-muted-foreground">
-              That is how the contract proves the work is yours — it loads the page and looks for the address, so it
-              has to be a page you can edit. A stock-photo listing or someone else&apos;s gallery will not work.
+              That is the only proof of ownership there is: independent reviewers load the page and look for this
+              address. So it has to be a page you can edit — a stock-photo listing or someone else&apos;s gallery will
+              not work.
             </p>
           </div>
         )}
+
+        <p className="text-xs text-muted-foreground">
+          New to this?{" "}
+          <Link href="/how-it-works" className="t-link">
+            See what happens after you register
+          </Link>
+          .
+        </p>
 
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2">
@@ -142,6 +152,10 @@ export default function RegisterWorkForm() {
           <div className="space-y-2">
             <Label htmlFor="basePrice">Base price (GEN)</Label>
             <Input id="basePrice" value={basePriceText} onChange={(e) => setBasePriceText(e.target.value)} placeholder="10" />
+            <p className="text-xs text-muted-foreground">
+              Your list price for a 12-month licence. A notice is priced from this — a quarter of it for small personal
+              use, up to 4.5× for an advert.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -170,6 +184,10 @@ export default function RegisterWorkForm() {
               className="t-field"
               rows={3}
             />
+            <p className="text-xs text-muted-foreground">
+              Reviewers read this to tell a licensed page from an unlicensed one. Include the exact credit line you want
+              licensees to show — a page carrying it is treated as licensed and pays nothing.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -182,6 +200,10 @@ export default function RegisterWorkForm() {
               className="t-field"
               rows={3}
             />
+            <p className="text-xs text-muted-foreground">
+              The pages checked for copies. There is no web-wide search, so paste pages you already suspect — from a
+              reverse image search, your referral traffic, or a tip-off. You can leave this empty and add pages later.
+            </p>
           </div>
         </div>
 

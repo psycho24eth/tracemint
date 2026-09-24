@@ -82,8 +82,8 @@ export function PreflightChecks({
 
       <div className="space-y-4 p-5">
         <p className="text-sm text-muted-foreground">
-          Registering runs an ownership check inside the transaction: the contract loads your portfolio page and looks
-          for your wallet address in its text. Run the same check here first — it costs nothing.
+          Registering costs a fee, and the ownership check runs only after you have paid it — so a portfolio page
+          missing your address costs you the fee and still gets refused. This runs the same check first, for free.
         </p>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -132,8 +132,8 @@ export function PreflightChecks({
 
         {run.name === "done" && blockers.length > 0 && (
           <p className="text-xs text-muted-foreground">
-            Fix the failures above and check again. This preview reads the page the way the contract does, but a page
-            that writes its text with JavaScript can still differ — if you are sure the address is visible, you can
+            Fix the failures above and check again. This reads the page the same way the reviewers will, but a page
+            that builds its text with JavaScript can still differ — if you are sure the address is visible, you can
             register anyway below.
           </p>
         )}
