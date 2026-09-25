@@ -48,7 +48,8 @@ export type WriteActionProps = {
   unavailable?: string | null;
   /** Runs first when the button is pressed; return false to stop, for example when a form is invalid. */
   onBeforeSubmit?: () => boolean;
-  onSuccess?: () => void;
+  /** Receives the transaction hash, so a caller can point at what the write produced. */
+  onSuccess?: (hash?: string) => void;
   variant?: "default" | "outline" | "secondary";
 };
 
@@ -175,7 +176,7 @@ export function WriteAction({
   function succeed(hash?: string) {
     setPhase({ name: "done", hash });
     void refresh();
-    onSuccess?.();
+    onSuccess?.(hash);
   }
 
   async function runDemoWrite(demoRole: DemoRole) {

@@ -10,8 +10,18 @@ vi.mock("@/lib/demo/DemoModeProvider", () => ({
   useActingAddress: () => "0x123abc...",
 }));
 
+// The form resolves the id of the work it just created from this list, so tests can seed it.
+const registry = vi.hoisted(() => ({ works: [] as { id: number; title: string; creator: string }[] }));
+
+vi.mock("@/lib/hooks/useLicenseHunter", () => ({
+  useWorks: () => ({ data: registry.works, isLoading: false }),
+}));
+
 // Auto-cleanup is off in this project, so renders would otherwise stack and every query find two.
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  registry.works = [];
+});
 
 describe("RegisterWorkForm", () => {
   it("validates work with correct args", () => {
@@ -106,5 +116,55 @@ describe("RegisterWorkForm", () => {
       "href",
       "/how-it-works",
     );
+  });
+  describe("once a work is registered", () => {
+    /** Stands in for the write, handing back a transaction hash the way the real one now does. */
+    const submitSucceeds = () =>
+      vi.mocked(WriteActionModule.WriteAction).mockImplementation((props) => (
+        <button type="button" onClick={() => props.onSuccess?.("0xfeed")}>
+          Submit
+        </button>
+      ));
+
+    it("says what was made and links to it, instead of silently emptying the form", async () => {
+      registry.works = [{ id: 8, title: "Rusted horseshoes", creator: "0x123abc..." }];
+      submitSucceeds();
+      const user = userEvent.setup();
+      render(<RegisterWorkForm />);
+
+      await user.type(screen.getByLabelText("Title"), "Rusted horseshoes");
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      // Clearing the fields and saying nothing left someone who had just paid a fee with no idea
+      // whether it had worked, or what they now owned.
+      expect(screen.getByRole("status")).toHaveTextContent("Added as work #8");
+      expect(screen.getByRole("link", { name: "Open work #8" })).toHaveAttribute("href", "/works/8");
+      expect(screen.getByRole("link", { name: "View transaction" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Title")).toHaveValue("");
+    });
+
+    it("tells them registering is not watching, because nothing happens until they scan", async () => {
+      registry.works = [{ id: 8, title: "Rusted horseshoes", creator: "0x123abc..." }];
+      submitSucceeds();
+      const user = userEvent.setup();
+      render(<RegisterWorkForm />);
+
+      await user.type(screen.getByLabelText("Title"), "Rusted horseshoes");
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      expect(screen.getByRole("status")).toHaveTextContent(/Nothing is being watched until you scan/);
+    });
+
+    it("still confirms by name when the new work has not reached the list yet", async () => {
+      submitSucceeds();
+      const user = userEvent.setup();
+      render(<RegisterWorkForm />);
+
+      await user.type(screen.getByLabelText("Title"), "Rusted horseshoes");
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      expect(screen.getByRole("status")).toHaveTextContent(/“Rusted horseshoes” is registered/);
+      expect(screen.getByText(/Finding it in the list above/)).toBeInTheDocument();
+    });
   });
 });

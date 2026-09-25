@@ -5,7 +5,8 @@ import { useCallback, useState } from "react";
 
 import { PreflightChecks } from "@/components/register/PreflightChecks";
 import { useActingAddress } from "@/lib/demo/DemoModeProvider";
-import { formatDate, parseGen, parseWatchUrls } from "@/lib/format";
+import { parseGen, parseWatchUrls, txLink } from "@/lib/format";
+import { useWorks } from "@/lib/hooks/useLicenseHunter";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { WriteAction } from "./WriteAction";
@@ -70,6 +71,20 @@ export default function RegisterWorkForm() {
   const [error, setError] = useState<string | null>(null);
   const [preflight, setPreflight] = useState({ checked: false, blocked: false });
   const [override, setOverride] = useState(false);
+  const [registered, setRegistered] = useState<{ title: string; hash?: string } | null>(null);
+  const works = useWorks();
+
+  // The write returns a transaction, not an id, so the new work is found by matching the title that was
+  // just submitted against this creator's works. Newest wins, so a repeated title still resolves.
+  const registeredWork = registered
+    ? [...(works.data ?? [])]
+        .reverse()
+        .find(
+          (work) =>
+            work.title === registered.title &&
+            (!actingAddress || work.creator.toLowerCase() === actingAddress.toLowerCase()),
+        )
+    : undefined;
 
   const onPreflight = useCallback((state: { checked: boolean; blocked: boolean }) => {
     setPreflight(state);
@@ -88,7 +103,10 @@ export default function RegisterWorkForm() {
     return true;
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = (hash?: string) => {
+    // Registering used to clear the form and say nothing at all, which left someone who had just paid a
+    // fee staring at empty boxes with no idea whether it had worked or what they now owned.
+    setRegistered({ title, hash });
     setTitle("");
     setImageUrl("");
     setPortfolioUrl("");
@@ -121,6 +139,34 @@ export default function RegisterWorkForm() {
       </div>
 
       <div className="space-y-5 p-5">
+        {registered && (
+          <div role="status" className="space-y-3 border-l-2 border-mint pl-4 text-sm">
+            <p className="text-mint">
+              {registeredWork
+                ? `Added as work #${registeredWork.id}: “${registered.title}”.`
+                : `“${registered.title}” is registered.`}
+            </p>
+            <p className="text-muted-foreground">
+              Nothing is being watched until you scan. Open it and press Scan now to look for copies on the pages you
+              listed.
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              {registeredWork ? (
+                <Link href={`/works/${registeredWork.id}`} className="t-link">
+                  Open work #{registeredWork.id}
+                </Link>
+              ) : (
+                <span className="text-xs text-muted-foreground">Finding it in the list above…</span>
+              )}
+              {registered.hash && (
+                <a href={txLink(registered.hash)} target="_blank" rel="noreferrer" className="t-link">
+                  View transaction
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
         {actingAddress && (
           <div className="space-y-2 border-l-2 border-signal pl-4 text-sm">
             <p>

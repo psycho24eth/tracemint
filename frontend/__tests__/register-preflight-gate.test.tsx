@@ -12,6 +12,11 @@ vi.mock("@/lib/demo/DemoModeProvider", () => ({
   useDemoMode: () => ({ role: null, setRole: () => {} }),
 }));
 
+vi.mock("@/lib/hooks/useLicenseHunter", () => ({
+  // The form resolves the id of the work it just created from this list.
+  useWorks: () => ({ data: [], isLoading: false }),
+}));
+
 // The gate is the point of this suite, so the write button reports whether it was disabled and why.
 vi.mock("@/components/WriteAction", () => ({
   WriteAction: ({ label, unavailable }: { label: string; unavailable?: string | null }) => (
