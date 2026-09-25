@@ -13,7 +13,7 @@ export default function WorksPage() {
 
   // The grid above #register grows when the chain answers, which moves the anchor down the page after
   // the browser has already tried to jump to it. Without this, every link to #register landed at the top.
-  useHashScroll(!isLoading);
+  useHashScroll();
 
   return (
     <PageShell>

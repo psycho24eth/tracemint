@@ -1,14 +1,19 @@
 import { cleanup, render } from "@testing-library/react";
+import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useHashScroll } from "@/lib/hooks/useHashScroll";
 
 /** A page shaped like /works: an anchor sitting below a list that arrives later. */
-function Page({ ready }: { ready: boolean }) {
-  useHashScroll(ready);
+function Page({ items }: { items: number }) {
+  useHashScroll();
   return (
     <>
-      <div>{ready ? "the list" : "loading"}</div>
+      <ul>
+        {Array.from({ length: items }, (_, index) => (
+          <li key={index}>item {index}</li>
+        ))}
+      </ul>
       <div id="register">Register a work</div>
     </>
   );
@@ -16,54 +21,94 @@ function Page({ ready }: { ready: boolean }) {
 
 const scrollIntoView = vi.fn();
 
+/** jsdom has no ResizeObserver, so the page-grew signal is delivered by hand. */
+const observers: Array<() => void> = [];
+
 beforeEach(() => {
   scrollIntoView.mockClear();
+  observers.length = 0;
   Element.prototype.scrollIntoView = scrollIntoView;
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(private readonly callback: () => void) {}
+      observe() {
+        observers.push(this.callback);
+      }
+      disconnect() {
+        const at = observers.indexOf(this.callback);
+        if (at !== -1) observers.splice(at, 1);
+      }
+    },
+  );
   window.location.hash = "";
 });
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
+
+/** What the browser does when the list lands and the page gets taller. */
+const pageGrew = () => act(() => observers.forEach((notify) => notify()));
 
 describe("arriving at a #hash on a page that loads its content", () => {
-  it("waits for the content instead of jumping while the anchor is still moving", () => {
+  it("re-aligns when the content lands and pushes the anchor down", () => {
     window.location.hash = "#register";
-    const { rerender } = render(<Page ready={false} />);
+    render(<Page items={0} />);
 
-    expect(scrollIntoView).not.toHaveBeenCalled();
-
-    rerender(<Page ready={true} />);
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    // Instant, not smooth: the page sets scroll-behavior: smooth, and a glide would race the growth.
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "instant" });
+
+    pageGrew();
+    expect(scrollIntoView).toHaveBeenCalledTimes(2);
   });
 
   it("leaves the page alone when the URL names nothing", () => {
-    render(<Page ready={true} />);
+    render(<Page items={7} />);
+    pageGrew();
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("leaves the page alone when the hash names something that is not there", () => {
     window.location.hash = "#nowhere";
-    render(<Page ready={true} />);
+    render(<Page items={7} />);
+    pageGrew();
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
-  it("does not yank somebody who has already started scrolling", () => {
+  it("stops the moment the visitor scrolls for themselves", () => {
     window.location.hash = "#register";
-    const { rerender } = render(<Page ready={false} />);
+    render(<Page items={0} />);
+    scrollIntoView.mockClear();
 
     window.dispatchEvent(new Event("wheel"));
-    rerender(<Page ready={true} />);
+    pageGrew();
 
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
-  it("scrolls once, not on every later render", () => {
+  it("gives up after a few seconds rather than owning the scroll forever", () => {
+    vi.useFakeTimers();
     window.location.hash = "#register";
-    const { rerender } = render(<Page ready={false} />);
+    render(<Page items={0} />);
+    scrollIntoView.mockClear();
 
-    rerender(<Page ready={true} />);
-    rerender(<Page ready={false} />);
-    rerender(<Page ready={true} />);
+    act(() => vi.advanceTimersByTime(9_000));
+    pageGrew();
 
-    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("stops watching the page once it is gone", () => {
+    window.location.hash = "#register";
+    const view = render(<Page items={0} />);
+    expect(observers).toHaveLength(1);
+
+    view.unmount();
+
+    expect(observers).toHaveLength(0);
   });
 });
