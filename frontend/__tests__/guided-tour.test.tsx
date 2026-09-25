@@ -108,7 +108,10 @@ describe("guided tour", () => {
     expect(screen.getByRole("dialog", { name: "Register your art" })).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "ArrowRight" });
-    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    // The last stop hands the visitor on to the walkthrough rather than offering to replay itself.
+    expect(screen.getByRole("link", { name: /Show me one, start to finish/ })).toHaveAttribute("href", "/start");
+
+    fireEvent.click(screen.getByRole("button", { name: "Skip tour" }));
     expect(card()).toBeNull();
     expect(window.localStorage.getItem("tracemint.tour")).toBe("seen");
   });
@@ -122,22 +125,29 @@ describe("guided tour", () => {
     expect(card()).toBeNull();
   });
 
-  it("steps aside when the visitor opens the wallet menu", () => {
-    const view = renderTour(["nav-works", "wallet"]);
-    fireEvent.click(screen.getByRole("button", { name: "Guide" }));
-    expect(card()).not.toBeNull();
-
-    state.modalOpen = true;
-    view.rerender(
+  it("steps aside while the wallet menu is open, then comes back instead of ending", () => {
+    const tree = () => (
       <TourProvider>
         <a href="#" data-tour="nav-works">
           nav-works
         </a>
         <StartButton />
-      </TourProvider>,
+      </TourProvider>
     );
+    const view = renderTour(["nav-works", "wallet"]);
+    fireEvent.click(screen.getByRole("button", { name: "Guide" }));
+    expect(card()).not.toBeNull();
 
+    state.modalOpen = true;
+    view.rerender(tree());
     expect(card()).toBeNull();
+
+    // The whole point: connecting a wallet used to destroy the only guidance on the site, at the moment
+    // a newcomer most needs telling what happens next. It must return, and must not count as finished.
+    state.modalOpen = false;
+    view.rerender(tree());
+    expect(card()).not.toBeNull();
+    expect(window.localStorage.getItem("tracemint.tour")).toBeNull();
   });
 
   it("goes to the home page first when started elsewhere", () => {

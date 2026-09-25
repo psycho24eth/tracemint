@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
@@ -69,6 +70,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const { modal } = useWallet();
   const [steps, setSteps] = useState<TourStep[] | null>(null);
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const startedOn = useRef<string | null>(null);
   const startOnArrival = useRef(false);
   const walletOpen = useRef(modal.open);
@@ -81,6 +83,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
     const onScreen = TOUR_STEPS.filter((step) => !step.target || findTarget(step.target));
     startedOn.current = page;
     setIndex(0);
+    // A run that ended while the wallet menu was open would otherwise leave the next one invisible.
+    setPaused(false);
     setSteps(onScreen);
   }, []);
 
@@ -111,20 +115,26 @@ export function TourProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [pathname, begin]);
 
-  // The visitor took over, by leaving the page or opening the wallet menu: step aside.
+  // The visitor took over by leaving the page: step aside for good.
   useEffect(() => {
     if (steps && startedOn.current !== null && pathname !== startedOn.current) finish();
   }, [pathname, steps, finish]);
+
+  // The wallet menu covers the page, so the tour hides while it is open and comes back when it closes.
+  // It used to end here instead, which meant connecting a wallet silently destroyed the only guidance
+  // the site has -- at the exact moment a newcomer has done something and wants to know what is next.
   useEffect(() => {
-    if (steps && modal.open) finish();
-  }, [modal.open, steps, finish]);
+    if (steps) setPaused(modal.open);
+  }, [modal.open, steps]);
 
   const value = useMemo(() => ({ active: steps !== null, start }), [steps, start]);
 
   return (
     <TourContext.Provider value={value}>
       {children}
-      {steps && steps.length > 0 && <TourOverlay steps={steps} index={index} onIndex={setIndex} onFinish={finish} />}
+      {steps && steps.length > 0 && !paused && (
+        <TourOverlay steps={steps} index={index} onIndex={setIndex} onFinish={finish} />
+      )}
     </TourContext.Provider>
   );
 }
@@ -244,7 +254,11 @@ function TourOverlay({
   const target = useTargetBox(step.target);
   const viewport = useViewport();
   const cardRef = useRef<HTMLDivElement>(null);
-  const primaryRef = useRef<HTMLButtonElement>(null);
+  // Holds a button on most steps and a link on the last one, so a callback ref keeps both honest.
+  const primaryRef = useRef<HTMLElement | null>(null);
+  const setPrimary = useCallback((node: HTMLElement | null) => {
+    primaryRef.current = node;
+  }, []);
   const [cardHeight, setCardHeight] = useState(0);
 
   useLayoutEffect(() => {
@@ -343,10 +357,19 @@ function TourOverlay({
                 <ArrowLeft aria-hidden="true" />
               </Button>
             )}
-            <Button ref={primaryRef} type="button" size="sm" onClick={next}>
-              {index === 0 ? "Show me around" : last ? "Finish" : "Next"}
-              {!last && <ArrowRight aria-hidden="true" />}
-            </Button>
+            {last && step.href ? (
+              <Button ref={setPrimary} asChild size="sm" onClick={onFinish}>
+                <Link href={step.href}>
+                  {step.cta ?? "Finish"}
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              </Button>
+            ) : (
+              <Button ref={setPrimary} type="button" size="sm" onClick={next}>
+                {index === 0 ? "Show me around" : last ? "Finish" : "Next"}
+                {!last && <ArrowRight aria-hidden="true" />}
+              </Button>
+            )}
           </div>
         </div>
       </div>

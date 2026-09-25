@@ -6,6 +6,10 @@ export type TourStep = {
   label: string;
   title: string;
   body: string;
+  /** Where the final step sends the visitor, so the tour ends with something to do rather than a goodbye. */
+  href?: string;
+  /** The label on that link. */
+  cta?: string;
 };
 
 /** A first look at the site, one stop at a time. Stops whose element isn't on screen are skipped. */
@@ -56,6 +60,8 @@ export const TOUR_STEPS: TourStep[] = [
     target: "guide",
     label: "Guide",
     title: "Come back anytime",
-    body: "That's the tour. Replay it from here whenever you like.",
+    body: "Replay this tour from here whenever you like. But the quickest way to understand TraceMint is to watch it catch one copy, start to finish — no wallet, nothing to fill in.",
+    href: "/start",
+    cta: "Show me one, start to finish",
   },
 ];
