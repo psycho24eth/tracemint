@@ -8,6 +8,8 @@ const state = vi.hoisted(() => ({
   actingAddress: "0x1234567890123456789012345678901234567890" as string | null,
   writeActionProps: null as any,
   zeroEarnings: false,
+  /** A connected wallet that has never registered anything: no works, no claims, no money. */
+  empty: false,
   openModal: vi.fn(),
 }));
 
@@ -27,7 +29,7 @@ vi.mock("@/lib/demo/DemoModeProvider", () => ({
 
 vi.mock("@/lib/hooks/useLicenseHunter", () => ({
   useEarnings: (creator: string | null) => ({
-    data: creator && !state.zeroEarnings ? 43_650_000_000_000_000_000n : 0n,
+    data: creator && !state.zeroEarnings && !state.empty ? 43_650_000_000_000_000_000n : 0n,
     isLoading: false,
   }),
   useLicensesFor: () => ({ data: [], isLoading: false }),
@@ -40,8 +42,8 @@ vi.mock("@/lib/hooks/useCreatorLedger", () => ({
       ? {
           works: [],
           claims: [],
-          lifetimeEarnings: 43_650_000_000_000_000_000n,
-          byStatus: { NOTICE_ISSUED: 0, NO_NOTICE: 0, PAID: 1, WITHDRAWN: 0, DISPUTE_REJECTED: 0 },
+          lifetimeEarnings: state.empty ? 0n : 43_650_000_000_000_000_000n,
+          byStatus: { NOTICE_ISSUED: 0, NO_NOTICE: 0, PAID: state.empty ? 0 : 1, WITHDRAWN: 0, DISPUTE_REJECTED: 0 },
         }
       : null,
     isLoading: false,
@@ -61,6 +63,7 @@ beforeEach(() => {
   state.actingAddress = "0x1234567890123456789012345678901234567890";
   state.writeActionProps = null;
   state.zeroEarnings = false;
+  state.empty = false;
   state.openModal.mockClear();
 });
 
@@ -87,6 +90,38 @@ describe("Dashboard", () => {
     render(<DashboardPage />);
     expect(screen.getByRole("button", { name: "Withdraw" })).toBeDisabled();
     expect(state.writeActionProps.disabled).toBe(true);
+  });
+
+  describe("with a connected wallet that has registered nothing", () => {
+    // This is the page someone opens straight after connecting. It used to show five zeros, a dead
+    // Withdraw button and no route onward at all, which is where new creators gave up.
+    it("says there is nothing yet and offers the walkthrough first", () => {
+      state.empty = true;
+      render(<DashboardPage />);
+
+      expect(screen.getByRole("heading", { level: 1, name: /Nothing here yet/ })).toBeInTheDocument();
+      expect(screen.getByText(/haven't added a picture to watch over yet/)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Show me how it works" })).toHaveAttribute("href", "/start");
+      expect(screen.getByRole("link", { name: "Add a picture now" })).toHaveAttribute("href", "/works#register");
+    });
+
+    it("drops the zeros rather than showing a Withdraw button with nothing behind it", () => {
+      state.empty = true;
+      render(<DashboardPage />);
+
+      expect(screen.queryByRole("button", { name: "Withdraw" })).not.toBeInTheDocument();
+      expect(screen.queryByText("0 GEN")).not.toBeInTheDocument();
+    });
+  });
+
+  it("keeps an unwithdrawn balance visible instead of hiding it behind onboarding", () => {
+    // Works can be empty while earnings are not, and burying the money would be far worse than a
+    // dull page. The empty state has to check the balance too, not just the works list.
+    state.zeroEarnings = false;
+    render(<DashboardPage />);
+
+    expect(screen.queryByText(/Nothing here yet/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Withdraw" })).not.toBeDisabled();
   });
 
   it("offers a wallet or a demo code when there is no acting address", () => {

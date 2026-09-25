@@ -1,6 +1,7 @@
 "use client";
 
 import { Wallet } from "lucide-react";
+import Link from "next/link";
 
 import { LicenseCard } from "@/components/cards/LicenseCard";
 import { NoticeCard } from "@/components/cards/NoticeCard";
@@ -52,6 +53,45 @@ export default function DashboardPage() {
 
   const withdrawableAmount = withdrawable.data ?? 0n;
   const ledgerData = ledger.data;
+
+  // Nothing registered yet, so every section below would render zeros and no route onward. This is the
+  // one page a newcomer opens straight after connecting, and it used to be where the guidance stopped.
+  // Money is checked too, not just works: showing "nothing here" over an unwithdrawn balance would hide
+  // somebody's earnings behind an onboarding panel.
+  const nothingYet =
+    ledgerData &&
+    ledgerData.works.length === 0 &&
+    ledgerData.claims.length === 0 &&
+    ledgerData.lifetimeEarnings === 0n &&
+    withdrawableAmount === 0n &&
+    (licenses.data?.length ?? 0) === 0;
+
+  if (nothingYet) {
+    return (
+      <PageShell>
+        <SectionHeading as="h1" kicker="Your account" title="Nothing here yet">
+          <span className="break-all">{actingAddress}</span>
+        </SectionHeading>
+        <div className="mt-10 max-w-2xl space-y-5 border-l-2 border-signal pl-5">
+          <p className="text-lg leading-relaxed">
+            You haven&apos;t added a picture to watch over yet, so there is nothing to earn from and nothing to show.
+          </p>
+          <p className="text-muted-foreground">
+            If you have never used TraceMint before, watch it catch one copy first. It takes two minutes, needs no
+            wallet, and costs nothing — then adding your own will make sense.
+          </p>
+          <div className="flex flex-wrap items-center gap-4 pt-1">
+            <Button asChild>
+              <Link href="/start">Show me how it works</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/works#register">Add a picture now</Link>
+            </Button>
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
   const workById = new Map((works.data ?? ledgerData?.works ?? []).map((work) => [work.id, work]));
   const openNotices = latestPerCopy((ledgerData?.claims ?? []).filter((claim) => claim.status === "NOTICE_ISSUED"));
   const ownedLicenses = [...(licenses.data ?? [])].reverse();
