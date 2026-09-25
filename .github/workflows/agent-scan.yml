@@ -2,7 +2,10 @@ name: Agent scan
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    # Deliberately off the hour. GitHub drops scheduled turns on public repositories at congested
+    # slots, and "*/30" asks for the two busiest minutes of every hour: measured gaps between real
+    # runs were 2.2 to 6 hours rather than 30 minutes. Odd minutes are GitHub's own advice.
+    - cron: "7,37 * * * *"
   workflow_dispatch: {}
 
 permissions:
