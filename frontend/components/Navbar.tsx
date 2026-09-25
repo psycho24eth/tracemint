@@ -14,6 +14,7 @@ import { LearnMenu, LEARN_LINKS } from "./LearnMenu";
 import { Logo } from "./Logo";
 
 const LINKS: { href: string; label: string; tour?: string }[] = [
+  { href: "/start", label: "Start here", tour: "nav-start" },
   { href: "/works", label: "Works", tour: "nav-works" },
   { href: "/notices", label: "Notices", tour: "nav-notices" },
   { href: "/dashboard", label: "Dashboard", tour: "nav-dashboard" },

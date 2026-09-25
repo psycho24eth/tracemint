@@ -4,6 +4,7 @@ import { canonicalUrl } from "@/lib/seo";
 
 const ROUTES = [
   { path: "/", priority: 1, changeFrequency: "daily" as const },
+  { path: "/start", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/how-it-works", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/faq", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly" as const },
