@@ -5,10 +5,15 @@ import { WorkCard } from "@/components/cards/WorkCard";
 import { PageShell } from "@/components/PageShell";
 import RegisterWorkForm from "@/components/RegisterWorkForm";
 import { SectionHeading } from "@/components/SectionHeading";
+import { useHashScroll } from "@/lib/hooks/useHashScroll";
 import { useWorks } from "@/lib/hooks/useLicenseHunter";
 
 export default function WorksPage() {
   const { data: works, isLoading, error } = useWorks();
+
+  // The grid above #register grows when the chain answers, which moves the anchor down the page after
+  // the browser has already tried to jump to it. Without this, every link to #register landed at the top.
+  useHashScroll(!isLoading);
 
   return (
     <PageShell>
@@ -27,7 +32,8 @@ export default function WorksPage() {
         ))}
       </div>
 
-      <div className="mt-20">
+      {/* Named so the walkthrough and the empty dashboard can send someone straight here. */}
+      <div id="register" className="mt-20 scroll-mt-24">
         <RegisterWorkForm />
       </div>
     </PageShell>
