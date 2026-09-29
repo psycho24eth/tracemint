@@ -119,13 +119,24 @@ export default function DashboardPage() {
           <p className="display-wide text-5xl text-signal">{formatGen(withdrawableAmount)}</p>
           <WriteAction method="withdraw_earnings" args={[]} label="Withdraw" disabled={withdrawableAmount === 0n} />
         </div>
-        {ledgerData && (
-          <div className="space-y-5 bg-background p-6">
-            <p className="t-label">Lifetime earnings</p>
+        {/* Always rendered. The grid paints the hairline colour behind its cells, so dropping the second
+            one left a solid block of it beside the balance -- and this read takes one call per work, so
+            it is often still in flight when the page first paints. */}
+        <div className="space-y-5 bg-background p-6" aria-busy={!ledgerData && !ledger.error}>
+          <p className="t-label">Lifetime earnings</p>
+          {ledgerData ? (
             <p className="display-wide text-5xl">{formatGen(ledgerData.lifetimeEarnings)}</p>
-            <p className="text-xs text-muted-foreground">97% of every license fee paid for your works.</p>
-          </div>
-        )}
+          ) : ledger.error ? (
+            <p className="display-wide text-5xl text-muted-foreground">&mdash;</p>
+          ) : (
+            <p aria-hidden="true" className="h-12 w-44 animate-pulse bg-foreground/5 motion-reduce:animate-none" />
+          )}
+          <p className="text-xs text-muted-foreground">
+            {ledger.error
+              ? "Your history could not be read just now. It fills in when the network answers."
+              : "97% of every license fee paid for your works."}
+          </p>
+        </div>
       </div>
 
       {ledgerData && (

@@ -10,6 +10,9 @@ const state = vi.hoisted(() => ({
   zeroEarnings: false,
   /** A connected wallet that has never registered anything: no works, no claims, no money. */
   empty: false,
+  /** The ledger read is one call per work, so it is often still in flight or refused. */
+  ledgerPending: false,
+  ledgerFailed: false,
   openModal: vi.fn(),
 }));
 
@@ -38,7 +41,8 @@ vi.mock("@/lib/hooks/useLicenseHunter", () => ({
 
 vi.mock("@/lib/hooks/useCreatorLedger", () => ({
   useCreatorLedger: (creator: string | null) => ({
-    data: creator
+    error: state.ledgerFailed ? new Error("rate limited") : undefined,
+    data: creator && !state.ledgerPending && !state.ledgerFailed
       ? {
           works: [],
           claims: [],
@@ -64,6 +68,8 @@ beforeEach(() => {
   state.writeActionProps = null;
   state.zeroEarnings = false;
   state.empty = false;
+  state.ledgerPending = false;
+  state.ledgerFailed = false;
   state.openModal.mockClear();
 });
 
@@ -132,6 +138,34 @@ describe("Dashboard", () => {
 
     expect(screen.queryByText(/Nothing here yet/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Withdraw" })).not.toBeDisabled();
+  });
+
+  // The two tiles sit in a grid whose own background is the hairline colour, showing through 1px gaps.
+  // Dropping the second tile therefore painted a solid grey block beside the balance, on camera.
+  describe("while the lifetime total is still being read", () => {
+    it("keeps the second tile in place instead of leaving a bare grid cell", () => {
+      state.ledgerPending = true;
+      render(<DashboardPage />);
+
+      expect(screen.getByText("Lifetime earnings")).toBeInTheDocument();
+      expect(screen.getByText(/97% of every license fee/)).toBeInTheDocument();
+    });
+
+    it("says it is busy rather than showing a figure it does not have", () => {
+      state.ledgerPending = true;
+      const { container } = render(<DashboardPage />);
+
+      expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+      expect(screen.queryByText("0 GEN")).not.toBeInTheDocument();
+    });
+
+    it("stops pulsing and explains itself when the read fails outright", () => {
+      state.ledgerFailed = true;
+      const { container } = render(<DashboardPage />);
+
+      expect(screen.getByText(/history could not be read/)).toBeInTheDocument();
+      expect(container.querySelector('[aria-busy="true"]')).toBeNull();
+    });
   });
 
   it("offers a wallet or a demo code when there is no acting address", () => {
