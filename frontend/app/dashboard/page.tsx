@@ -88,6 +88,17 @@ export default function DashboardPage() {
               <Link href="/works#register">Add a picture now</Link>
             </Button>
           </div>
+          {/* Registering needs a page carrying this wallet's address. Somebody who has none would otherwise
+              be stuck here, because a connected wallet hides the demo panel this page shows when there is
+              no wallet at all -- so the way in has to be named rather than merely existing elsewhere. */}
+          <p className="text-sm text-muted-foreground">
+            Adding your own needs a web page carrying your wallet address, to prove the picture is yours. No page
+            yet?{" "}
+            <Link href="/judges" className="t-link">
+              Try it as our demo creator
+            </Link>{" "}
+            and everything works without one.
+          </p>
         </div>
       </PageShell>
     );

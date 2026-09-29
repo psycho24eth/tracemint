@@ -124,6 +124,47 @@ describe("checking a registration before it costs anything", () => {
     expect(screen.getByTestId("register")).toBeEnabled();
   });
 
+  // A message telling somebody their page is missing an address is useless if they have no page. These
+  // cover the way out being on screen at the moment they hit the wall, rather than described in prose.
+  describe("when the ownership check fails and they may have nowhere to put the address", () => {
+    it("shows the exact line to paste, with the address in it", async () => {
+      vi.stubGlobal("fetch", answer(OWNERSHIP_FAILS));
+      const user = userEvent.setup();
+      render(<RegisterWorkForm />);
+      await fillUrls(user);
+
+      await user.click(screen.getByRole("button", { name: /Run the check/ }));
+
+      await waitFor(() => expect(screen.getByText(`TraceMint wallet: ${ADDRESS}`)).toBeInTheDocument());
+      expect(screen.getByRole("button", { name: /Copy the line to paste/ })).toBeInTheDocument();
+    });
+
+    it("offers a free page to put it on, and a route that needs no page at all", async () => {
+      vi.stubGlobal("fetch", answer(OWNERSHIP_FAILS));
+      const user = userEvent.setup();
+      render(<RegisterWorkForm />);
+      await fillUrls(user);
+
+      await user.click(screen.getByRole("button", { name: /Run the check/ }));
+
+      await waitFor(() => expect(screen.getByRole("link", { name: "public gist" })).toBeInTheDocument());
+      expect(screen.getByRole("link", { name: /demo creator/ })).toHaveAttribute("href", "/judges");
+    });
+
+    it("stays out of the way when the check passed", async () => {
+      vi.stubGlobal("fetch", answer(PASSES));
+      const user = userEvent.setup();
+      render(<RegisterWorkForm />);
+      await fillUrls(user);
+
+      await user.click(screen.getByRole("button", { name: /Run the check/ }));
+
+      await waitFor(() => expect(screen.getByText("Ready to register")).toBeInTheDocument());
+      expect(screen.queryByText(`TraceMint wallet: ${ADDRESS}`)).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "public gist" })).not.toBeInTheDocument();
+    });
+  });
+
   it("closes the gate again when a URL is edited, so the answer cannot go stale", async () => {
     vi.stubGlobal("fetch", answer(PASSES));
     const user = userEvent.setup();

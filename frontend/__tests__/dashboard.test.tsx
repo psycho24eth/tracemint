@@ -105,6 +105,16 @@ describe("Dashboard", () => {
       expect(screen.getByRole("link", { name: "Add a picture now" })).toHaveAttribute("href", "/works#register");
     });
 
+    it("names the route that needs no page, since a connected wallet hides the demo panel", () => {
+      // Registering needs a page carrying your address. Somebody who has none is stuck here, and the
+      // panel that offers demo mode only renders when there is no wallet at all -- so this must say so.
+      state.empty = true;
+      render(<DashboardPage />);
+
+      expect(screen.getByRole("link", { name: /demo creator/ })).toHaveAttribute("href", "/judges");
+      expect(screen.getByText(/needs a web page carrying your wallet address/)).toBeInTheDocument();
+    });
+
     it("drops the zeros rather than showing a Withdraw button with nothing behind it", () => {
       state.empty = true;
       render(<DashboardPage />);

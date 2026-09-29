@@ -64,7 +64,7 @@ export function portfolioCheck(options: { text: string; address: string; truncat
     detail: options.truncated
       ? `Your wallet address is not in the first ${PORTFOLIO_TEXT_LIMIT.toLocaleString()} characters of this page, which is all the contract reads.`
       : "Your wallet address does not appear anywhere in the text of this page.",
-    fix: "Paste the address into text a visitor can actually see — a bio line, a caption, a footer. It has to be a page you can edit, so someone else's gallery or stock-photo listing will not work.",
+    fix: "It has to be visible text on a page you can edit, so someone else's gallery or a stock-photo listing will not work.",
   };
 }
 

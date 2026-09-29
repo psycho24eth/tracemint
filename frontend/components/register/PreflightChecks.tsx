@@ -1,9 +1,17 @@
 "use client";
 
 import { AlertTriangle, Check as CheckIcon, LoaderCircle, ShieldCheck, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { CopyButton } from "@/components/wallet/CopyButton";
 import { blocking, type Check, type CheckVerdict, type PreflightResult } from "@/lib/preflight";
+
+/** Named by the contract's own ownership rule, and the only failure with somewhere else to go. */
+const OWNERSHIP_CHECK = "Ownership proof";
+
+/** Written out for a human reading the portfolio page; the check itself only looks for the address. */
+const ownershipLine = (address: string) => `TraceMint wallet: ${address}`;
 
 type Run =
   | { name: "idle" }
@@ -45,6 +53,8 @@ export function PreflightChecks({
 
   const checks = run.name === "done" ? run.checks : [];
   const blockers = blocking(checks);
+  // The one failure nobody can act on from the message alone: it needs a page, and they may have none.
+  const ownershipFailed = checks.some((item) => item.name === OWNERSHIP_CHECK && item.verdict === "fail");
 
   useEffect(() => {
     onResult({ checked: run.name === "done", blocked: blockers.length > 0 });
@@ -128,6 +138,35 @@ export function PreflightChecks({
               );
             })}
           </ul>
+        )}
+
+        {ownershipFailed && address && (
+          <div className="space-y-4 border-l-2 border-destructive/60 pl-4">
+            <div className="space-y-2">
+              <p className="text-sm text-foreground">Put this line on a page you control, then check again:</p>
+              <div className="flex items-center justify-between gap-2 border border-line bg-background/70 py-1 pl-3 pr-1">
+                <code className="truncate font-mono text-xs text-signal">{ownershipLine(address)}</code>
+                <CopyButton value={ownershipLine(address)} label="Copy the line to paste" />
+              </div>
+            </div>
+
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              No website of your own? A{" "}
+              <a href="https://gist.github.com/" target="_blank" rel="noreferrer" className="t-link">
+                public gist
+              </a>{" "}
+              is a page you control and takes about a minute. Paste the line, create it, then put the gist&apos;s
+              address in Portfolio URL above.
+            </p>
+
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Or set nothing up yet and{" "}
+              <Link href="/judges" className="t-link">
+                try the whole thing as our demo creator
+              </Link>
+              , which needs no page and no wallet.
+            </p>
+          </div>
         )}
 
         {run.name === "done" && blockers.length > 0 && (
