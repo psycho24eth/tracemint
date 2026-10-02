@@ -162,6 +162,8 @@ export const DEMO_COLLECTION: DemoWork[] = [
     // Carries the credit line, so a page showing it reads as licensed rather than as a copy.
     terms: `${DEMO_TERMS}. Credit line: ${LICENSE_CREDIT}`,
     original: "/demo/paper-crane.png",
+    // The whole shop and its blog, not just the mug: a scan reads five pages and matches exactly one.
+    watch: ["/demo/shop/crane-mug", "/demo/shop", "/demo/shop/koi-tote", "/demo/shop/chrome-case", "/demo/blog"],
     copies: [
       {
         site: "shop",
