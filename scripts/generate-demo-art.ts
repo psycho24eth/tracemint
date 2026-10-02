@@ -48,6 +48,7 @@ const ARTWORKS: Artwork[] = [
   { original: "dune-monolith.png", copy: "desert-dreamscape.jpg", svg: duneMonolithSvg, cropFractions: [0.03, 0.02, 0.01] },
   { original: "glass-tide.png", copy: "glass-tide-feature.jpg", svg: glassTideSvg, cropFractions: [0.03, 0.02, 0.01] },
   { original: "signal-garden.png", copy: "signal-garden-poster.jpg", svg: signalGardenSvg, cropFractions: [0.03, 0.02, 0.01] },
+  { original: "paper-crane.png", copy: "crane-mug-print.jpg", svg: paperCraneSvg, cropFractions: [0.03, 0.02, 0.01] },
 ];
 
 function cyberneticHorizonSvg(): string {
@@ -270,6 +271,32 @@ function signalGardenSvg(): string {
   <circle cx="250" cy="128" r="14" fill="#ff4fd8" opacity="0.18" /><circle cx="250" cy="128" r="8" fill="#ff4fd8" />
   <circle cx="150" cy="38" r="3.5" fill="#050a08" />`,
     "#7fb8a0",
+  );
+}
+
+// The only light piece in the collection, which also keeps its hash far from the night scenes.
+function paperCraneSvg(): string {
+  return artSvg(
+    `<linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5efe3" /><stop offset="1" stop-color="#e9dfcb" /></linearGradient>
+    <radialGradient id="crane-sun" cx="40%" cy="38%" r="70%"><stop offset="0" stop-color="#f06a48" /><stop offset="1" stop-color="#d9452c" /></radialGradient>`,
+    `<rect width="300" height="200" fill="url(#paper)" />
+  <circle cx="196" cy="80" r="54" fill="#e8583c" opacity="0.12" />
+  <circle cx="196" cy="80" r="44" fill="url(#crane-sun)" />
+  <g fill="none" stroke="#2b3150" stroke-linecap="round">
+    <path d="M24 160 C84 154 140 166 206 158 C240 154 264 159 282 157" stroke-opacity="0.38" stroke-width="1.6" />
+    <path d="M60 171 C110 167 170 175 240 169" stroke-opacity="0.24" stroke-width="1.3" />
+    <path d="M96 181 C140 178 190 184 226 180" stroke-opacity="0.14" stroke-width="1.1" />
+  </g>
+  <polygon points="146,111 160,112 204,36" fill="#2f3a66" />
+  <polygon points="160,112 172,113 204,36" fill="#1f2647" />
+  <polygon points="178,116 172,112 226,74" fill="#2f3a66" />
+  <polygon points="120,120 152,110 150,132" fill="#4b5a92" />
+  <polygon points="152,110 184,118 150,132" fill="#2f3a66" />
+  <polygon points="122,119 132,114 88,72" fill="#1f2647" />
+  <polygon points="88,72 95,75 74,86" fill="#1f2647" />
+  <polygon points="138,113 152,112 112,30" fill="#5b6aa0" />
+  <polygon points="152,112 166,112 112,30" fill="#3b4778" />`,
+    "#9a8f7a",
   );
 }
 

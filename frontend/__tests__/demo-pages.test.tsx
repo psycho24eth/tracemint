@@ -52,7 +52,8 @@ describe("demo portfolio page", () => {
 
     expect(sources).toContain("/demo/cybernetic-horizon.png");
     expect(sources).toContain("/demo/koi-current.png");
-    expect(sources).toHaveLength(6);
+    expect(sources).toContain("/demo/paper-crane.png");
+    expect(sources).toHaveLength(7);
   });
 });
 

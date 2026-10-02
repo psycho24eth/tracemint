@@ -152,6 +152,29 @@ export const DEMO_COLLECTION: DemoWork[] = [
       },
     ],
   },
+  {
+    // Registered by hand in the product film, under tracemint.vercel.app rather than the seed's domain.
+    // seed-demo.ts matches works by image path, so a later seed run still finds it and skips it.
+    title: "Paper Crane",
+    year: 2026,
+    style: "Paper and ink",
+    basePriceGen: 10,
+    // Carries the credit line, so a page showing it reads as licensed rather than as a copy.
+    terms: `${DEMO_TERMS}. Credit line: ${LICENSE_CREDIT}`,
+    original: "/demo/paper-crane.png",
+    copies: [
+      {
+        site: "shop",
+        slug: "crane-mug",
+        image: "/demo/crane-mug-print.jpg",
+        product: "Paper crane mug",
+        price: "$22",
+        description:
+          "Glazed stoneware printed with an indigo paper crane crossing a vermilion sun. Holds a generous 350 ml and keeps its colour through the dishwasher.",
+        details: ["350 ml stoneware", "Dishwasher and microwave safe", "Ships in 2-4 business days"],
+      },
+    ],
+  },
 ];
 
 export type ShopCopy = Extract<DemoCopy, { site: "shop" }>;
