@@ -1,7 +1,9 @@
 import { DEMO_COLLECTION, watchPaths } from "../frontend/lib/demo/catalog";
+import { registeredByPath, type RegisteredWork } from "./seedPlan";
 import {
   addressLink,
   clientFor,
+  createAccount,
   describeTx,
   HEAVY_FEES,
   json,
@@ -17,19 +19,21 @@ const GEN = 10n ** 18n;
 
 loadEnv();
 const site = requireEnv("NEXT_PUBLIC_SITE_URL").replace(/\/+$/, "");
-const creator = clientFor(requireEnv("DEMO_CREATOR_PRIVATE_KEY") as Hex);
+const creatorKey = requireEnv("DEMO_CREATOR_PRIVATE_KEY") as Hex;
+const creator = clientFor(creatorKey);
 const address = requireEnv("LICENSE_HUNTER_ADDRESS");
 const portfolioUrl = `${site}/demo/portfolio`;
 
-// Works are matched by image URL, so re-running only registers what is missing.
-const existing = (await read(creator, address, "list_works")) as Array<Record<string, unknown>>;
-const registered = new Map(existing.map((work) => [String(work.image_url), work.id]));
+// Works are matched by image path (see seedPlan.ts), so re-running only registers what is missing,
+// whichever of the site's domains a work was registered under.
+const existing = (await read(creator, address, "list_works")) as RegisteredWork[];
+const registered = registeredByPath(existing, createAccount(creatorKey).address);
 
 let failed = false;
 for (const work of DEMO_COLLECTION) {
   const imageUrl = `${site}${work.original}`;
-  if (registered.has(imageUrl)) {
-    console.log(`${work.title}: already registered as work ${registered.get(imageUrl)}`);
+  if (registered.has(work.original)) {
+    console.log(`${work.title}: already registered as work ${registered.get(work.original)}`);
     continue;
   }
 
