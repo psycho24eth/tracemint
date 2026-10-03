@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { OwnershipStep, useOwnershipLook } from "@/components/register/OwnershipStep";
 import { PreflightChecks } from "@/components/register/PreflightChecks";
 import { useActingAddress } from "@/lib/demo/DemoModeProvider";
 import { parseGen, parseWatchUrls, txLink } from "@/lib/format";
@@ -72,7 +73,20 @@ export default function RegisterWorkForm() {
   const [preflight, setPreflight] = useState({ checked: false, blocked: false });
   const [override, setOverride] = useState(false);
   const [registered, setRegistered] = useState<{ title: string; hash?: string } | null>(null);
+  const [pageEdited, setPageEdited] = useState(false);
   const works = useWorks();
+  const ownership = useOwnershipLook(actingAddress, portfolioUrl);
+
+  // Someone who has registered before already has a page carrying their line, so it is offered again rather
+  // than asked for. Once they edit the field it is theirs, and is never replaced behind their back.
+  const newestPage = actingAddress
+    ? (works.data ?? [])
+        .filter((work) => work.portfolioUrl && work.creator.toLowerCase() === actingAddress.toLowerCase())
+        .sort((a, b) => b.id - a.id)[0]?.portfolioUrl
+    : undefined;
+  useEffect(() => {
+    if (newestPage && !pageEdited && portfolioUrl === "") setPortfolioUrl(newestPage);
+  }, [newestPage, pageEdited, portfolioUrl]);
 
   // The write returns a transaction, not an id, so the new work is found by matching the title that was
   // just submitted against this creator's works. Newest wins, so a repeated title still resolves.
@@ -88,7 +102,6 @@ export default function RegisterWorkForm() {
 
   const onPreflight = useCallback((state: { checked: boolean; blocked: boolean }) => {
     setPreflight(state);
-    if (!state.blocked) setOverride(false);
   }, []);
 
   const fields = { title, imageUrl, portfolioUrl, basePriceText, terms, watchUrlsText };
@@ -109,7 +122,7 @@ export default function RegisterWorkForm() {
     setRegistered({ title, hash });
     setTitle("");
     setImageUrl("");
-    setPortfolioUrl("");
+    // The ownership page stays: it proves who they are, not which work, so the next one can use it as well.
     setBasePriceText("10");
     setTerms("Non-exclusive web license, 12 months");
     setWatchUrlsText("");
@@ -126,6 +139,8 @@ export default function RegisterWorkForm() {
   }
 
   const watchUrls = parseWatchUrls(watchUrlsText);
+  const ownershipFound = ownership.look.name === "found";
+  const ownershipStuck = ["missing", "stopped", "error"].includes(ownership.look.name);
 
   const args = [title, imageUrl, portfolioUrl, basePriceWei, terms, watchUrls];
 
@@ -167,20 +182,6 @@ export default function RegisterWorkForm() {
           </div>
         )}
 
-        {actingAddress && (
-          <div className="space-y-2 border-l-2 border-signal pl-4 text-sm">
-            <p>
-              Put this address in the visible text of your portfolio page:{" "}
-              <code className="break-all text-signal">{actingAddress}</code>
-            </p>
-            <p className="text-muted-foreground">
-              That is the only proof of ownership there is: independent reviewers load the page and look for this
-              address. So it has to be a page you can edit — a stock-photo listing or someone else&apos;s gallery will
-              not work.
-            </p>
-          </div>
-        )}
-
         <p className="text-xs text-muted-foreground">
           New to this?{" "}
           <Link href="/how-it-works" className="t-link">
@@ -188,6 +189,21 @@ export default function RegisterWorkForm() {
           </Link>
           .
         </p>
+
+        <OwnershipStep
+          address={actingAddress}
+          url={portfolioUrl}
+          onUrlChange={(url) => {
+            setPageEdited(true);
+            setPortfolioUrl(url);
+            // Vouching that one page builds its text with JavaScript says nothing about the next one.
+            setOverride(false);
+          }}
+          look={ownership.look}
+          onLookAgain={ownership.lookAgain}
+        />
+
+        <h3 className="t-label text-foreground">Step 2 · Your artwork</h3>
 
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2">
@@ -209,14 +225,6 @@ export default function RegisterWorkForm() {
             <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…/artwork.jpg" />
             <p className="text-xs text-muted-foreground">
               A direct link to the image file itself, not the page it sits on.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="portfolioUrl">Portfolio URL</Label>
-            <Input id="portfolioUrl" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} placeholder="https://your-site.com/about" />
-            <p className="text-xs text-muted-foreground">
-              A page you control, showing the address above in its text.
             </p>
           </div>
 
@@ -253,12 +261,7 @@ export default function RegisterWorkForm() {
           </div>
         </div>
 
-        <PreflightChecks
-          address={actingAddress}
-          portfolioUrl={portfolioUrl}
-          imageUrl={imageUrl}
-          onResult={onPreflight}
-        />
+        <PreflightChecks imageUrl={imageUrl} onResult={onPreflight} />
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
@@ -268,15 +271,17 @@ export default function RegisterWorkForm() {
           args={args}
           label="Register work"
           unavailable={
-            preflight.blocked && !override
-              ? "The ownership check above would fail, and the contract charges a fee before refusing. Fix it and check again."
-              : null
+            !ownershipFound && !override
+              ? "Finish step 1 first: TraceMint has to find your line on your ownership page, or the contract keeps the fee and refuses."
+              : preflight.blocked
+                ? "The image check failed: validators could not load your image when they judge a copy, so every scan of this work would fail. Fix it and check again."
+                : null
           }
           onBeforeSubmit={handleBeforeSubmit}
           onSuccess={handleSuccess}
         />
 
-        {preflight.blocked && !override && (
+        {ownershipStuck && !override && (
           <button
             type="button"
             onClick={() => setOverride(true)}

@@ -79,10 +79,11 @@ describe("RegisterWorkForm", () => {
   it("says where the address has to go, and why", () => {
     vi.mocked(WriteActionModule.WriteAction).mockReturnValue(<button>Submit</button>);
     render(<RegisterWorkForm />);
-    expect(screen.getByText(/Put this address in the visible text of your portfolio page/)).toBeInTheDocument();
-    expect(screen.getByText("0x123abc...")).toBeInTheDocument();
+    expect(screen.getByText("TraceMint wallet: 0x123abc...")).toBeInTheDocument();
     // The commonest mistake is pointing this at a page you cannot edit, such as a stock-photo listing.
-    expect(screen.getByText(/a page you can edit/)).toBeInTheDocument();
+    expect(screen.getByText(/only when your wallet address is on a page you control/)).toBeInTheDocument();
+    // Without a reason, putting an address on a page sounds arbitrary, and people give up on it.
+    expect(screen.getByText(/stops anyone else registering your art as theirs/)).toBeInTheDocument();
   });
 
   it("says what the terms are for, since the label alone does not give it away", () => {
