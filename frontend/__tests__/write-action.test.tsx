@@ -33,6 +33,13 @@ vi.mock("@/lib/genlayer/client", () => ({
   GENLAYER_NETWORK: { chainName: "GenLayer Studio Next" },
 }));
 vi.mock("@/lib/hooks/useLicenseHunter", () => ({ useRefreshLicenseHunter: () => state.refresh }));
+// The payout's dry run and signing are covered in message-write.test.ts; here only the component's use of it is.
+const payout = vi.hoisted(() => ({ submit: vi.fn() }));
+vi.mock("@/lib/genlayer/message-write", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/genlayer/message-write")>()),
+  walletClient: () => ({}),
+  submitMessageWrite: payout.submit,
+}));
 
 import { WriteAction } from "../components/WriteAction";
 import { UNDECIDED_MESSAGE } from "../lib/tx";
@@ -220,18 +227,6 @@ describe("WriteAction in wallet mode", () => {
     expect(screen.getByRole("button", { name: "Get test GEN" })).toBeInTheDocument();
   });
 
-  it("explains that wallet payouts go through the demo creator role", () => {
-    state.address = "0x000000000000000000000000000000000000a11e";
-    render(<WriteAction method="withdraw_earnings" args={[]} label="Withdraw" />);
-
-    expect(screen.getByRole("button", { name: "Withdraw" })).toBeDisabled();
-    expect(
-      screen.getByText(
-        "Withdrawing from a connected wallet isn't supported on Studio Next yet: payouts need a message fee allocation that wallet signing can't send.",
-      ),
-    ).toBeInTheDocument();
-  });
-
   it("opens the transaction panel and finishes when the wallet flow succeeds", async () => {
     state.address = "0x000000000000000000000000000000000000a11e";
     const onSuccess = vi.fn();
@@ -247,6 +242,55 @@ describe("WriteAction in wallet mode", () => {
     fireEvent.click(hold);
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("WriteAction paying out to a connected wallet", () => {
+  beforeEach(() => {
+    state.address = "0x000000000000000000000000000000000000a11e";
+    payout.submit.mockReset().mockResolvedValue(HASH);
+  });
+
+  it("lets a connected creator wallet withdraw through a dry-run-priced write, then waits for validators", async () => {
+    const onSuccess = vi.fn();
+    render(<WriteAction method="withdraw_earnings" args={[]} label="Withdraw" onSuccess={onSuccess} />);
+
+    const withdraw = screen.getByRole("button", { name: "Withdraw" });
+    expect(withdraw).toBeEnabled();
+    fireEvent.click(withdraw);
+
+    expect(await screen.findByText(/^Done\./)).toBeInTheDocument();
+    expect(onSuccess).toHaveBeenCalledWith(HASH);
+    expect(payout.submit).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ address: "0x00000000000000000000000000000000000000c0", functionName: "withdraw_earnings", args: [] }),
+      expect.objectContaining({ onPriced: expect.any(Function) }),
+    );
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain(`/api/tx/${HASH}`);
+    // The Transaction Kit's panel cannot declare the payout's allocation, so it never opens for one.
+    expect(document.querySelector("button.gltk-hold")).toBeNull();
+  });
+
+  it("asks for the signature once the payout is priced", async () => {
+    payout.submit.mockImplementation(async (_client: unknown, _call: unknown, options: { onPriced: () => void }) => {
+      options.onPriced();
+      return new Promise(() => {});
+    });
+    render(<WriteAction method="withdraw_earnings" args={[]} label="Withdraw" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Withdraw" }));
+
+    expect(await screen.findByRole("button", { name: "Confirm in your wallet…" })).toBeDisabled();
+  });
+
+  it("says why a payout was not sent, and tracks nothing", async () => {
+    payout.submit.mockRejectedValue(new Error("The request was declined in the wallet."));
+    render(<WriteAction method="withdraw_earnings" args={[]} label="Withdraw" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Withdraw" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The request was declined in the wallet.");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

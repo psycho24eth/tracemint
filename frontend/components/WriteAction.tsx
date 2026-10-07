@@ -11,8 +11,9 @@ import { DEMO_ROLE_LABELS, roleForMethod, type DemoRole } from "@/lib/demo/roles
 import { FAUCET_CEILING_WEI } from "@/lib/faucet";
 import { formatGen, txLink } from "@/lib/format";
 import { GENLAYER_NETWORK, getContractAddress } from "@/lib/genlayer/client";
-import { NETWORK_SHORT_NAME } from "@/lib/genlayer/connection";
+import { NETWORK_SHORT_NAME, type Eip1193Provider } from "@/lib/genlayer/connection";
 import { useTransactionKit } from "@/lib/genlayer/kit";
+import { MESSAGE_METHODS, submitMessageWrite, walletClient } from "@/lib/genlayer/message-write";
 import { useWallet } from "@/lib/genlayer/wallet";
 import { useGenBalance } from "@/lib/hooks/useGenBalance";
 import { useRefreshLicenseHunter } from "@/lib/hooks/useLicenseHunter";
@@ -32,6 +33,8 @@ type Phase =
   | { name: "pending"; hash: string }
   | { name: "switching" }
   | { name: "wallet" }
+  | { name: "pricing" }
+  | { name: "signing" }
   | { name: "done"; hash?: string }
   | { name: "failed"; message: string; hash?: string };
 
@@ -53,10 +56,6 @@ export type WriteActionProps = {
   variant?: "default" | "outline" | "secondary";
 };
 
-// The Transaction Kit submits fees without message allocations, and Studio Next rejects payout messages
-// without them (docs/platform-checks.md), so payouts run through the demo creator role for now.
-const WALLET_BLOCKED_METHODS = new Set(["withdraw_earnings", "withdraw_protocol_fees"]);
-
 function blockedReason(options: {
   contractAddress: string;
   method: string;
@@ -71,9 +70,6 @@ function blockedReason(options: {
     return options.requiredRole
       ? `Switch to the ${DEMO_ROLE_LABELS[options.requiredRole].toLowerCase()} role to do this.`
       : "Exit demo mode to use your wallet for this.";
-  }
-  if (WALLET_BLOCKED_METHODS.has(options.method)) {
-    return "Withdrawing from a connected wallet isn't supported on Studio Next yet: payouts need a message fee allocation that wallet signing can't send.";
   }
   // No wallet yet is not a dead end: the button opens the wallet picker instead.
   if (options.address && !options.hasKit) return "Your wallet is not ready. Reconnect it and try again.";
@@ -170,7 +166,7 @@ export function WriteAction({
       address,
       hasKit: kit !== null,
     });
-  const busy = phase.name === "submitting" || phase.name === "pending" || phase.name === "switching";
+  const busy = ["submitting", "pending", "switching", "pricing", "signing"].includes(phase.name);
   const needsWallet = !role && !address;
 
   function succeed(hash?: string) {
@@ -179,21 +175,45 @@ export function WriteAction({
     onSuccess?.(hash);
   }
 
+  /** Follows a sent write until validators decide. /api/tx reads any transaction, not only demo ones. */
+  async function settle(hash: string) {
+    setPhase({ name: "pending", hash });
+    const status = await waitForDemoTx(hash, { onStatus: (update) => noteStatus(update.status) });
+    freeze(!status.decided ? "unknown" : status.successful ? "accepted" : "problem");
+    if (status.successful) {
+      succeed(hash);
+      return;
+    }
+    const message = status.decided ? (outcomeMessage(status) ?? UNDECIDED_MESSAGE) : STILL_WAITING_MESSAGE;
+    setPhase({ name: "failed", message, hash });
+  }
+
   async function runDemoWrite(demoRole: DemoRole) {
     setPhase({ name: "submitting" });
     setRun({ startedAt: Date.now(), progress: FIRST_ROUND });
     let hash: string | undefined;
     try {
       hash = await submitDemoWrite({ role: demoRole, method, args, value, accessCode: accessCode ?? undefined });
-      setPhase({ name: "pending", hash });
-      const status = await waitForDemoTx(hash, { onStatus: (update) => noteStatus(update.status) });
-      freeze(!status.decided ? "unknown" : status.successful ? "accepted" : "problem");
-      if (status.successful) {
-        succeed(hash);
-        return;
-      }
-      const message = status.decided ? (outcomeMessage(status) ?? UNDECIDED_MESSAGE) : STILL_WAITING_MESSAGE;
-      setPhase({ name: "failed", message, hash });
+      await settle(hash);
+    } catch (error) {
+      freeze("unknown");
+      setPhase({ name: "failed", message: (error as Error).message, hash });
+    }
+  }
+
+  // A payout skips the Transaction Kit's panel, whose submit cannot declare the allocation its transfer message needs.
+  async function runWalletPayout(wallet: string, walletProvider: Eip1193Provider) {
+    setPhase({ name: "pricing" });
+    let hash: string | undefined;
+    try {
+      hash = await submitMessageWrite(
+        walletClient(wallet, walletProvider),
+        { address: contractAddress, functionName: method, args, value },
+        { onPriced: () => setPhase({ name: "signing" }) },
+      );
+      // The clock times the validators, so it starts once the wallet has signed.
+      setRun({ startedAt: Date.now(), progress: FIRST_ROUND });
+      await settle(hash);
     } catch (error) {
       freeze("unknown");
       setPhase({ name: "failed", message: (error as Error).message, hash });
@@ -217,6 +237,10 @@ export function WriteAction({
         setPhase({ name: "failed", message: `Your wallet is still on another network. Switch to ${GENLAYER_NETWORK.chainName} and try again.` });
         return;
       }
+    }
+    if (MESSAGE_METHODS.has(method) && provider) {
+      void runWalletPayout(address, provider);
+      return;
     }
     setPhase({ name: "wallet" });
   }
@@ -257,7 +281,11 @@ export function WriteAction({
               ? "Waiting for validators…"
               : phase.name === "switching"
                 ? "Switching network…"
-                : label}
+                : phase.name === "pricing"
+                  ? "Preparing payout…"
+                  : phase.name === "signing"
+                    ? "Confirm in your wallet…"
+                    : label}
         </Button>
       )}
       {reason && <p className="text-xs text-muted-foreground">{reason}</p>}

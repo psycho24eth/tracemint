@@ -37,7 +37,7 @@ Yes. Every action in the app is a read or a write against the deployed contract,
 - Writes: `register_work`, `update_watchlist`, `file_claim`, `pay_license`, `withdraw_earnings`, `withdraw_protocol_fees`, `dispute`, `set_agent`.
 - Views: `get_work`, `list_works`, `get_claim`, `list_claims`, `list_notices`, `get_license`, `list_licenses`, `get_earnings`, `get_stats`.
 
-Wallet users sign through the Transaction Kit panel, and the demo roles sign server-side.
+Wallet users sign through the Transaction Kit panel, except for payouts (`withdraw_earnings`, `withdraw_protocol_fees`): the wallet signs those as a genlayer-js write that declares the transfer message's fee allocation, as explained under [Limits and honesty](#limits-and-honesty). The demo roles sign server-side.
 
 **2. Why does decentralized judgment matter here?**
 Deciding whether an image on someone else's site is a copy of your work involves judgment calls:
@@ -64,7 +64,7 @@ If the accuser decides, the accused has no reason to trust the fee. In TraceMint
 - CI runs the contract linter, the contract tests, and the agent tests.
 - Locally:
   - 75 direct-mode contract tests
-  - 57 agent tests
+  - 67 agent tests
   - the web test suite
   - `next build`
 - The contract is deployed and smoke-checked on Studio Next.
@@ -137,8 +137,8 @@ Studio Next scripts read keys from a git-ignored `.env.local`:
 - **Test network:** Studio Next is a test network, and its GEN has no value. The demo roles sign with test keys held by the server, need the judge access code, and are rate-limited.
 - **Vision input:** Studio Next's model rejects raw downloaded image bytes, so validators compare browser screenshots of the image URLs.
 - **Payouts need a message fee allocation:**
-  - Studio Next only delivers a contract-emitted payout when the transaction declares a fee allocation for the message. The server builds that allocation with `estimateTransactionFeesForWrite`.
-  - Transaction Kit `0.1.0-rc.2` does not send allocations, so wallet-mode withdrawals are disabled in the UI, and withdrawals run through the demo creator role.
+  - Studio Next only delivers a contract-emitted payout when the transaction declares a fee allocation for the message. Both the demo signer and the wallet path build that allocation with `estimateTransactionFeesForWrite`, a dry run of the exact call.
+  - Transaction Kit `0.1.0-rc.2` does not send allocations, so wallet withdrawals skip it. The browser runs the dry run as the connected wallet, then the wallet signs a genlayer-js write that declares the allocation (`frontend/lib/genlayer/message-write.ts`).
   - Internal `emit_transfer` messages never reached wallets on Studio Next, so the contract pays with an external message instead.
 
   Evidence for both is in [docs/platform-checks.md](docs/platform-checks.md).

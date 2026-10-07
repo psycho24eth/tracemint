@@ -53,12 +53,19 @@ Spike contract `0x9df23488FE9c2B2E60b29D2244929fD130e12596`.
   - The caller must declare a message allocation tree, which is what `client.estimateTransactionFeesForWrite(...)` returns (`messageAllocations`). A write that emits a message is sent with `fees: { distribution, messageAllocations, feeValue }`.
   - Internal `emit_transfer` messages to wallets never arrive.
   - Fee value alone, with no allocations, fails with `Mode1MessageFeesRequireGenVMPerEmissionSupport`. That is all the Transaction Kit's `submit` sends, so wallet writes that emit messages need allocations added on top of the kit.
+  - Wallets therefore withdraw without the kit. `frontend/lib/genlayer/message-write.ts` runs `estimateTransactionFeesForWrite` as the connected wallet, and the wallet signs a genlayer-js `writeContract` with `{ distribution, messageAllocations, feeValue }`. It sends nothing when the dry run returns no allocation.
 
 ## Notes for later tasks
 
 - gltest direct mode has no handler for contract-emitted messages, so successful withdrawals are verified on Studio Next only.
 - gltest direct mode returns empty bytes for `web.render(mode="screenshot")`, and the SDK decodes screenshots with Pillow. `tests/direct/conftest.py` stubs `PIL.Image` so the decoder accepts the mock.
 - Run 1 also showed that under `run_nondet_default`, a leader error plus a validator that returns a bool raises `TypeError: validator function returned 'Return(calldata=False)' while leader returned 'VMError(...)'`. LicenseHunter avoids this by using `run_nondet`.
+- When the contract refuses a dry run, for example a wallet with nothing to withdraw, `sim_estimateTransactionFees` answers only "execution failed" (`InvalidInputRpcError`), without the contract's message. Observed 2026-10-07.
+- Read-only check of the wallet path on 2026-10-07. `message-write.ts` ran `withdraw_protocol_fees` as the owner's address (a 2.7 GEN balance; no creator had earnings), with a stand-in wallet that declined to sign. The check found:
+  - The dry run returned one External allocation with a 0.00015 GEN budget.
+  - genlayer-js encoded `addTransaction` with that allocation and `totalMessageFees` equal to the budget.
+  - `eth_estimateGas` accepted the transaction.
+  - The only wallet request was `eth_sendTransaction`, for chain 61997, with a value equal to the fee.
 - Simulating a write with `estimateTransactionFeesForWrite` executes the method. Use it only for writes that emit messages (the withdrawals), not for `file_claim` or `dispute`, whose simulation would run the whole vision judgment.
 
 ## Deployment

@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { createAccount, createClient, generatePrivateKey, isSuccessful } from "genlayer-js";
 import { studioDevnet } from "genlayer-js/chains";
 
+import { LIGHT_FEES, type FeePreset } from "./fees";
+
 export type Hex = `0x${string}`;
 
 export const RPC_URL = process.env.GENLAYER_RPC_URL ?? "https://studio-next.genlayer.com/api";
@@ -95,12 +97,8 @@ export async function balanceOf(address: string): Promise<bigint> {
   return BigInt(await rpc<string>("eth_getBalance", `["${address}","latest"]`));
 }
 
-export const LIGHT_FEES = { leaderTimeunitsAllocation: 100, validatorTimeunitsAllocation: 200, rotations: [1] };
-// validatorTimeunitsAllocation capped at 600 by the chain (PhaseTimeoutOutOfBounds(1200,30,600) observed at 1200); see docs/platform-checks.md.
-// Judgments compare model verdicts, and a leader whose model reads the page differently (or cannot see images)
-// is outvoted. Funding the chain's maximum of three rotations lets other leaders try before the claim is dropped.
-export const HEAVY_FEES = { leaderTimeunitsAllocation: 600, validatorTimeunitsAllocation: 600, rotations: [3] };
-export type FeePreset = typeof LIGHT_FEES;
+export { HEAVY_FEES, LIGHT_FEES } from "./fees";
+export type { FeePreset } from "./fees";
 
 export async function quoteFees(client: StudioClient, preset: FeePreset) {
   const estimate = await client.estimateTransactionFees(preset as never);

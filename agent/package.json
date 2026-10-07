@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./fees": "./src/fees.ts",
     "./genlayer": "./src/genlayer.ts",
     "./phash": "./src/phash.ts"
   },

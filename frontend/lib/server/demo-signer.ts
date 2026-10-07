@@ -3,6 +3,7 @@ import "server-only";
 import { clientFor, HEAVY_FEES, LIGHT_FEES, submitWrite, type Hex } from "@licensehunter/agent/genlayer";
 
 import type { DemoRole, DemoWriteRequest } from "@/lib/demo/roles";
+import { MESSAGE_METHODS } from "@/lib/genlayer/message-write";
 
 const KEY_ENV: Record<DemoRole, "DEMO_CREATOR_PRIVATE_KEY" | "DEMO_SITE_OWNER_PRIVATE_KEY"> = {
   creator: "DEMO_CREATOR_PRIVATE_KEY",
@@ -11,8 +12,6 @@ const KEY_ENV: Record<DemoRole, "DEMO_CREATOR_PRIVATE_KEY" | "DEMO_SITE_OWNER_PR
 
 // These methods make validators fetch pages or images, so they need the larger time allocation.
 const HEAVY_METHODS = new Set(["register_work", "file_claim", "dispute"]);
-// These methods pay out through an emitted message, which needs a declared fee allocation (docs/platform-checks.md).
-const MESSAGE_METHODS = new Set(["withdraw_earnings", "withdraw_protocol_fees"]);
 
 export class DemoConfigError extends Error {}
 
