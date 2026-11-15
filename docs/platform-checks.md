@@ -76,3 +76,32 @@ Spike contract `0x9df23488FE9c2B2E60b29D2244929fD130e12596`.
 - Smoke check on 2026-09-16: `smoke ok`, zero works and claims
 - Not yet verified on Studio Next: the ownership check against a live portfolio page, a full claim, a payment, and a withdrawal. Plan 4 runs these through the judge path once the demo pages are hosted.
 
+## Runtime recovery, 2026-11-15
+
+Scheduled Agent scan run [43730710558](https://github.com/psycho24eth/tracemint/actions/runs/43730710558)
+failed on its first `gen_call`. The SDK reported "Missing or invalid parameters", but
+`gen_getContractSchema` exposed the underlying `invalid_contract runner malformed` error.
+
+The contract now explicitly selects `v0.3.0` and pins
+`py-genlayer:babwp9t37jw9g4j2bccgn14g6x7x9s1f7dsmh7emvz735pz4zxa0`.
+This runner comes from the [v0.3 executor release manifest](https://github.com/genlayerlabs/genvm-executor/blob/59f9e2139c748924e1d63f6d00ac2feff2f35a87/runners/support/versions/current.nix).
+The network schema check returned all 17 methods, and all 75 direct-mode contract tests
+passed against that release's Python SDK source.
+
+The existing deployment was repaired with Studio's `sim_upgradeContractCode`, authorized
+by the original deployer's signature. Only the version and runner header changed. The
+application code and storage declarations are identical, and the constructor was not rerun.
+The [repair transaction](https://explorer-studio-dev.genlayer.com/tx/0xfe3e16aee475e72ca6b3a473088df7cde199b0bbebc4e053d4304d2c63558cbf)
+finalized successfully. Reads at the original address returned 9 works, 43 claims, and
+3 licenses; the balance remained 3.105 GEN. A fresh deployment was unnecessary.
+
+For future runtime changes, validate the candidate with `gen_getContractSchemaForCode`
+before sending an update. Back up the deployed source, verify the signer is its original
+deployer, keep the storage layout unchanged, then verify the update receipt and live reads.
+Studio's signing procedure is documented in its [upgrade script](https://github.com/genlayerlabs/genlayer-studio/blob/main/scripts/upgrade_contract.py).
+
+The website outage is separate: Vercel returns `402 DEPLOYMENT_DISABLED`, and its deployment
+API reports that the team exceeded fair-use limits and is blocked. Unpausing the project
+does not lift that team restriction. Watched pages hosted there remain unavailable until
+the account owner resolves the restriction with Vercel.
+
